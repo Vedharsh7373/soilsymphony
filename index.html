@@ -179,7 +179,7 @@
 <footer>Made with 💛 for your plants • classic look, modern brains</footer>
 
 <script>
-/* ================== Audio Engine ================== */
+/* AUDIO ENGINE (same as before) */
 let audioCtx;
 let masterGain;
 let activeNodes = [];
@@ -191,52 +191,44 @@ async function ensureAudio() {
     masterGain.gain.value = 0.3;
     masterGain.connect(audioCtx.destination);
   }
-  if (audioCtx.state === "suspended") {
-    await audioCtx.resume();
-  }
+  if (audioCtx.state === "suspended") await audioCtx.resume();
 }
 
 function stopAll() {
-  activeNodes.forEach(n => {
-    try { n.stop ? n.stop() : n.disconnect(); } catch(e) {}
-  });
+  activeNodes.forEach(n => { try { n.stop ? n.stop() : n.disconnect(); } catch(e){} });
   activeNodes = [];
 }
 
-// Play a 432 Hz sine tone (calming)
 async function play432() {
   await ensureAudio();
   stopAll();
+
   const osc = audioCtx.createOscillator();
   osc.type = "sine";
   osc.frequency.setValueAtTime(432, audioCtx.currentTime);
-  const gain = audioCtx.createGain();
-  gain.gain.setValueAtTime(0.0001, audioCtx.currentTime);
-  gain.gain.exponentialRampToValueAtTime(0.8, audioCtx.currentTime + 0.5);
-  osc.connect(gain).connect(masterGain);
+  osc.connect(masterGain);
   osc.start();
   activeNodes.push(osc);
 }
 
-// Play a slow minor-style loop (sad plant sound)
 async function playSad() {
   await ensureAudio();
   stopAll();
 
   const tempo = 60;
   const beat = 60 / tempo;
-  const notes = [ 220.00, 261.63, 329.63, 261.63, 207.65, 261.63 ];
-  
+  const notes = [220, 261.63, 329.63, 261.63, 207.65, 261.63];
+
   let time = audioCtx.currentTime + 0.05;
 
-  function scheduleOnce() {
+  function schedule() {
     notes.forEach((f, i) => {
       const start = time + i * beat;
       const dur = beat * 0.9;
 
       const osc = audioCtx.createOscillator();
+      osc.frequency.value = f;
       osc.type = "sine";
-      osc.frequency.setValueAtTime(f, start);
 
       const g = audioCtx.createGain();
       g.gain.setValueAtTime(0.0001, start);
@@ -245,77 +237,82 @@ async function playSad() {
 
       osc.connect(g).connect(masterGain);
       osc.start(start);
-      osc.stop(start + dur + 0.05);
+      osc.stop(start + dur);
+
       activeNodes.push(osc);
     });
     time += notes.length * beat;
   }
 
-  const loop = setInterval(scheduleOnce, notes.length * beat * 1000);
-  scheduleOnce();
+  const loop = setInterval(schedule, notes.length * beat * 1000);
+  schedule();
   activeNodes.push({ stop: () => clearInterval(loop) });
 }
 
-/* ================== UI Functions ================== */
+/* UI updates */
 const statusDiv = document.getElementById("status");
 const track = document.getElementById("track");
 const serialPill = document.getElementById("serial-pill");
-const toggleBtn = document.getElementById("toggle-audio");
-
-toggleBtn.addEventListener("click", async () => {
-  await ensureAudio();
-  alert("Audio engine ready!");
-});
 
 function setWet() {
   statusDiv.textContent = "Plant is Happy (Wet)";
   statusDiv.className = "status wet";
-  play432().catch(console.error);
+  play432();
   track.textContent = "432 Hz Calming Tone";
 }
 
 function setDry() {
   statusDiv.textContent = "Plant is Sad (Dry)";
   statusDiv.className = "status dry";
-  playSad().catch(console.error);
-  track.textContent = "Sad Arpeggio Loop";
+  playSad();
+  track.textContent = "Sad Melody";
 }
 
-/* ================== Web Serial ================== */
+function setPumpOn() {
+  stopAll();
+  statusDiv.textContent = "Pump Activated 💧";
+  statusDiv.className = "status wet";
+  track.textContent = "Pump working";
+}
+
+/* SERIAL CONNECTION */
 document.getElementById("connect").addEventListener("click", async () => {
   try {
     const port = await navigator.serial.requestPort();
     await port.open({ baudRate: 115200 });
+
     serialPill.textContent = "Serial: connected";
 
     const decoder = new TextDecoderStream();
-    const readableClosed = port.readable.pipeTo(decoder.writable);
+    port.readable.pipeTo(decoder.writable);
     const reader = decoder.readable.getReader();
 
     let buffer = "";
+
     while (true) {
       const { value, done } = await reader.read();
       if (done) break;
       if (!value) continue;
 
       buffer += value;
+
       let idx;
       while ((idx = buffer.indexOf("\n")) >= 0) {
         const line = buffer.slice(0, idx).trim();
         buffer = buffer.slice(idx + 1);
-        if (!line) continue;
 
         if (line.includes("WET")) setWet();
         else if (line.includes("DRY")) setDry();
+        else if (line.includes("PUMP_ON")) setPumpOn();
       }
     }
-  } catch (e) {
-    console.error(e);
+  } catch (err) {
     serialPill.textContent = "Serial: failed";
-    alert("Serial connection failed. Ensure you're in Chrome/Edge with Web Serial enabled.");
+    console.error(err);
   }
 });
 </script>
+
 </body>
 </html>
 ```
