@@ -202,6 +202,7 @@ function stopAll() {
 }
 
 async function playHappy() {
+  if (!audioEnabled) return;
   stopAll();
   
   currentAudio = new Audio('https://github.com/Vedharsh7373/soilsymphony/raw/main/OneRepublic_-_I_Aint_Worried.mp3');
@@ -216,6 +217,7 @@ async function playHappy() {
 }
 
 async function playSad() {
+  if (!audioEnabled) return;
   stopAll();
   
   currentAudio = new Audio('https://github.com/Vedharsh7373/soilsymphony/raw/main/Coldplay%20-%20Hymn%20For%20The%20Weekend.mp3');
@@ -270,6 +272,7 @@ function setWet() {
   statusDiv.className = "status wet";
   playHappy();
   track.textContent = "I Ain't Worried - OneRepublic";
+  resetCountdown();
 }
 
 function setDry() {
@@ -280,10 +283,10 @@ function setDry() {
 }
 
 function setPumpOn() {
-  stopAll();
   statusDiv.textContent = "Pump Activated 💧";
   statusDiv.className = "status wet";
-  track.textContent = "Pump working";
+  track.textContent = "Pump working (music continues)";
+  resetCountdown();
 }
 
 /* SERIAL CONNECTION */
@@ -339,9 +342,29 @@ document.getElementById("connect").addEventListener("click", async () => {
 });
 
 /* Enable audio button (just resumes context) */
-document.getElementById("toggle-audio").addEventListener("click", async () => {
-  if (currentAudio && currentAudio.paused) {
-    await currentAudio.play();
+let audioEnabled = false;
+const audioBtn = document.getElementById("toggle-audio");
+
+audioBtn.addEventListener("click", async () => {
+  if (!audioEnabled) {
+    // Enable audio
+    if (currentAudio && currentAudio.paused) {
+      try {
+        await currentAudio.play();
+      } catch (err) {
+        console.error('Error playing audio:', err);
+      }
+    }
+    audioEnabled = true;
+    audioBtn.textContent = "Disable Audio";
+    audioBtn.style.background = "linear-gradient(135deg, #dc2626 0%, #ef4444 100%)";
+  } else {
+    // Disable audio
+    stopAll();
+    audioEnabled = false;
+    audioBtn.textContent = "Enable Audio";
+    audioBtn.style.background = "linear-gradient(135deg, #0c4a6e 0%, #0284c7 100%)";
+    track.textContent = "Audio disabled";
   }
 });
 </script>
