@@ -201,17 +201,17 @@ function stopAll() {
   }
 }
 
+let audioEnabled = false;
+
 async function playHappy() {
   if (!audioEnabled) return;
   stopAll();
 
-  // 432 Hz meditation music from your GitHub repo (raw URL) [web:35][web:37]
   currentAudio = new Audio(
     "https://github.com/Vedharsh7373/soilsymphony/raw/main/432%20Hz%20-%20Positive%20Energy%20Meditation%20Music%20Deep%20Healing%20Music%20for%20The%20Body%20and%20Soul.mp3"
   );
   currentAudio.loop = true;
   currentAudio.volume = 0.5;
-
   try {
     await currentAudio.play();
   } catch (err) {
@@ -223,13 +223,11 @@ async function playSad() {
   if (!audioEnabled) return;
   stopAll();
 
-  // Coldplay track from your GitHub repo (raw URL) [web:35][web:37]
   currentAudio = new Audio(
     "https://github.com/Vedharsh7373/soilsymphony/raw/main/Coldplay%20-%20Hymn%20For%20The%20Weekend.mp3"
   );
   currentAudio.loop = true;
   currentAudio.volume = 0.5;
-
   try {
     await currentAudio.play();
   } catch (err) {
@@ -237,14 +235,17 @@ async function playSad() {
   }
 }
 
-/* UI updates */
+/* UI + timer */
 const statusDiv = document.getElementById("status");
 const track = document.getElementById("track");
 const serialPill = document.getElementById("serial-pill");
 const timerBox = document.getElementById("timerBox");
+const audioBtn = document.getElementById("toggle-audio");
 
 let timerInterval = null;
 let remainingMs = 0;
+let currentMood = null; // "wet" or "dry"
+let writer = null;      // serial writer to send commands
 
 function updateTimerDisplay() {
   const totalSec = Math.floor(remainingMs / 1000);
@@ -257,13 +258,23 @@ function startCountdown(ms) {
   if (timerInterval) clearInterval(timerInterval);
   remainingMs = ms;
   updateTimerDisplay();
-  timerInterval = setInterval(() => {
+  timerInterval = setInterval(async () => {
     remainingMs -= 1000;
     if (remainingMs <= 0) {
       remainingMs = 0;
       clearInterval(timerInterval);
+      updateTimerDisplay();
+      // TIME IS UP -> tell Arduino to turn pump ON
+      if (writer) {
+        try {
+          await writer.write("PUMP_ON\n");
+        } catch (e) {
+          console.error("Failed to send PUMP_ON:", e);
+        }
+      }
+    } else {
+      updateTimerDisplay();
     }
-    updateTimerDisplay();
   }, 1000);
 }
 
@@ -274,6 +285,9 @@ function resetCountdown() {
 }
 
 function setWet() {
+  if (currentMood === "wet") return;
+  currentMood = "wet";
+
   statusDiv.textContent = "Plant is Happy (Wet)";
   statusDiv.className = "status wet";
   playHappy();
@@ -282,6 +296,9 @@ function setWet() {
 }
 
 function setDry() {
+  if (currentMood === "dry") return;
+  currentMood = "dry";
+
   statusDiv.textContent = "Plant is Sad (Dry)";
   statusDiv.className = "status dry";
   playSad();
@@ -292,7 +309,6 @@ function setPumpOn() {
   statusDiv.textContent = "Pump Activated 💧";
   statusDiv.className = "status wet";
   track.textContent = "Pump working (music continues)";
-  resetCountdown();
 }
 
 /* SERIAL CONNECTION */
@@ -306,6 +322,12 @@ document.getElementById("connect").addEventListener("click", async () => {
     await port.open({ baudRate: 115200 });
     serialPill.textContent = "Serial: connected";
 
+    // writer to send commands
+    const textEncoder = new TextEncoderStream();
+    textEncoder.readable.pipeTo(port.writable);
+    writer = textEncoder.writable.getWriter();
+
+    // reader to receive data
     const decoder = new TextDecoderStream();
     port.readable.pipeTo(decoder.writable);
     const reader = decoder.readable.getReader();
@@ -321,19 +343,15 @@ document.getElementById("connect").addEventListener("click", async () => {
         const line = buffer.slice(0, idx).trim();
         buffer = buffer.slice(idx + 1);
 
-        // Keywords from Arduino
         if (line.includes("WET")) setWet();
         else if (line.includes("DRY")) setDry();
         else if (line.includes("PUMP_ON")) setPumpOn();
 
-        // New STATE messages for timer
         if (line.startsWith("STATE:")) {
           const state = line.substring(6);
-          if (state === "DRY_START") {
+          if (state === "DRY") {
+            // start 15‑minute countdown whenever DRY is reported
             startCountdown(15 * 60 * 1000);
-          } else if (state === "PUMP_ON") {
-            remainingMs = 0;
-            updateTimerDisplay();
           } else if (state === "PUMP_OFF" || state === "WET" || state === "MOIST") {
             resetCountdown();
           }
@@ -347,10 +365,7 @@ document.getElementById("connect").addEventListener("click", async () => {
 });
 
 /* Enable/disable audio */
-let audioEnabled = false;
-const audioBtn = document.getElementById("toggle-audio");
-
-audioBtn.addEventListener("click", async () => {
+audioBtn.addEventListener("click", () => {
   if (!audioEnabled) {
     audioEnabled = true;
     audioBtn.textContent = "Disable Audio";
