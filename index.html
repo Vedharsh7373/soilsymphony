@@ -204,30 +204,36 @@ function stopAll() {
 async function playHappy() {
   if (!audioEnabled) return;
   stopAll();
-  
-  currentAudio = new Audio('https://raw.githubusercontent.com/Vedharsh7373/soilsymphony/main/OneRepublic_-_I_Aint_Worried.mp3');
+
+  // 432 Hz meditation music from your GitHub repo (raw URL) [web:35][web:37]
+  currentAudio = new Audio(
+    "https://github.com/Vedharsh7373/soilsymphony/raw/main/432%20Hz%20-%20Positive%20Energy%20Meditation%20Music%20Deep%20Healing%20Music%20for%20The%20Body%20and%20Soul.mp3"
+  );
   currentAudio.loop = true;
   currentAudio.volume = 0.5;
-  
+
   try {
     await currentAudio.play();
   } catch (err) {
-    console.error('Error playing happy music:', err);
+    console.error("Error playing happy music:", err);
   }
 }
 
 async function playSad() {
   if (!audioEnabled) return;
   stopAll();
-  
-  currentAudio = new Audio('https://raw.githubusercontent.com/Vedharsh7373/soilsymphony/main/Coldplay%20-%20Hymn%20For%20The%20Weekend.mp3');
+
+  // Coldplay track from your GitHub repo (raw URL) [web:35][web:37]
+  currentAudio = new Audio(
+    "https://github.com/Vedharsh7373/soilsymphony/raw/main/Coldplay%20-%20Hymn%20For%20The%20Weekend.mp3"
+  );
   currentAudio.loop = true;
   currentAudio.volume = 0.5;
-  
+
   try {
     await currentAudio.play();
   } catch (err) {
-    console.error('Error playing sad music:', err);
+    console.error("Error playing sad music:", err);
   }
 }
 
@@ -271,7 +277,7 @@ function setWet() {
   statusDiv.textContent = "Plant is Happy (Wet)";
   statusDiv.className = "status wet";
   playHappy();
-  track.textContent = "I Ain't Worried - OneRepublic";
+  track.textContent = "432 Hz – Positive Energy Meditation";
   resetCountdown();
 }
 
@@ -315,7 +321,7 @@ document.getElementById("connect").addEventListener("click", async () => {
         const line = buffer.slice(0, idx).trim();
         buffer = buffer.slice(idx + 1);
 
-        // Old keywords for audio / status
+        // Keywords from Arduino
         if (line.includes("WET")) setWet();
         else if (line.includes("DRY")) setDry();
         else if (line.includes("PUMP_ON")) setPumpOn();
@@ -324,7 +330,6 @@ document.getElementById("connect").addEventListener("click", async () => {
         if (line.startsWith("STATE:")) {
           const state = line.substring(6);
           if (state === "DRY_START") {
-            // start 15‑minute countdown
             startCountdown(15 * 60 * 1000);
           } else if (state === "PUMP_ON") {
             remainingMs = 0;
@@ -341,31 +346,23 @@ document.getElementById("connect").addEventListener("click", async () => {
   }
 });
 
-/* Enable audio button (just resumes context) */
+/* Enable/disable audio */
 let audioEnabled = false;
 const audioBtn = document.getElementById("toggle-audio");
 
 audioBtn.addEventListener("click", async () => {
   if (!audioEnabled) {
-    // Enable audio - create a dummy audio to unlock browser audio
-    const dummyAudio = new Audio();
-    try {
-      await dummyAudio.play();
-      dummyAudio.pause();
-    } catch (err) {
-      console.log('Audio context unlocked');
-    }
-    
     audioEnabled = true;
     audioBtn.textContent = "Disable Audio";
     audioBtn.style.background = "linear-gradient(135deg, #dc2626 0%, #ef4444 100%)";
+    audioBtn.style.borderColor = "#ef4444";
     track.textContent = "Audio enabled - waiting for plant status";
   } else {
-    // Disable audio
     stopAll();
     audioEnabled = false;
     audioBtn.textContent = "Enable Audio";
     audioBtn.style.background = "linear-gradient(135deg, #0c4a6e 0%, #0284c7 100%)";
+    audioBtn.style.borderColor = "#14b8a6";
     track.textContent = "Audio disabled";
   }
 });
