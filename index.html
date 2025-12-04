@@ -1,271 +1,282 @@
-  ```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Plant Care Dashboard</title>
-  <style>
-    :root { color-scheme: light; }
-    body {
-      font-family: "Segoe UI", Arial, sans-serif;
-      margin: 0;
-      padding: 0;
-      background: linear-gradient(135deg, #0c4a6e 0%, #0284c7 100%);
-      color: #0c4a6e;
-      display: flex;
-      flex-direction: column;
-      min-height: 100vh;
-    }
-    header {
-      background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
-      color: white;
-      padding: 1.5rem 2rem;
-      text-align: center;
-      font-size: 2rem;
-      font-weight: bold;
-      letter-spacing: 1px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-      position: relative;
-      z-index: 10;
-    }
-    main {
-      flex: 1;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      padding: 2rem;
-    }
-    .card {
-      background: white;
-      padding: 2.5rem;
-      border-radius: 1.2rem;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-      max-width: 560px;
-      width: 100%;
-      text-align: center;
-      border: 3px solid #14b8a6;
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
-    .card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
-    }
-    .card h2 { 
-      color: #0c4a6e; 
-      margin-bottom: 1.5rem; 
-      font-size: 1.8rem;
-      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    }
-    .status {
-      font-size: 1.4rem;
-      margin: 1.5rem 0;
-      padding: 1.2rem;
-      border-radius: 0.8rem;
-      font-weight: bold;
-      border: 3px solid #14b8a6;
-      background: linear-gradient(135deg, #f0fdfa 0%, white 100%);
-      transition: all 0.4s ease;
-      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
-    }
-    .status.wet { 
-      color: #059669; 
-      border-color: #10b981;
-      background: linear-gradient(135deg, #d1fae5 0%, white 100%);
-    }
-    .status.dry { 
-      color: #dc2626; 
-      border-color: #ef4444;
-      background: linear-gradient(135deg, #fee2e2 0%, white 100%);
-    }
-    button {
-      background: linear-gradient(135deg, #0c4a6e 0%, #0284c7 100%);
-      color: white;
-      border: 2px solid #14b8a6;
-      padding: 1rem 1.8rem;
-      font-size: 1.1rem;
-      border-radius: 0.8rem;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      margin: 0.5rem;
-      font-weight: bold;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    }
-    button:hover { 
-      background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
-      color: #0c4a6e; 
-      transform: translateY(-2px);
-      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
-    }
-    button:active {
-      transform: translateY(0);
-    }
-    footer {
-      background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
-      text-align: center;
-      padding: 1rem;
-      font-size: 1rem;
-      color: white;
-      font-weight: bold;
-      box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.1);
-    }
-    .row {
-      display: flex;
-      gap: 1rem;
-      justify-content: center;
-      margin-top: 1.5rem;
-      flex-wrap: wrap;
-    }
-    .pill {
-      padding: 0.6rem 1.2rem;
-      border: 2px solid #14b8a6;
-      border-radius: 25px;
-      background: linear-gradient(135deg, white 0%, #f0fdfa 100%);
-      color: #0c4a6e;
-      font-weight: bold;
-      font-size: 1rem;
-      transition: all 0.3s ease;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-    }
-    .pill:hover {
-      background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
-      color: white;
-      transform: scale(1.05);
-    }
-    .muted { 
-      color: #64748b; 
-      font-size: 0.95rem; 
-      font-style: italic;
-      margin-top: 1.5rem;
-    }
-    #track {
-      font-style: italic;
-      color: #0c4a6e;
-      font-weight: 500;
-    }
-    p strong {
-      color: #0c4a6e;
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Plant Care Dashboard</title>
+<style>
+:root { color-scheme: light; }
+body {
+  font-family: "Segoe UI", Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  background: linear-gradient(135deg, #0c4a6e 0%, #0284c7 100%);
+  color: #0c4a6e;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+header {
+  background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
+  color: white;
+  padding: 1.5rem 2rem;
+  text-align: center;
+  font-size: 2rem;
+  font-weight: bold;
+  letter-spacing: 1px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  position: relative;
+  z-index: 10;
+}
+main {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+}
+.card {
+  background: white;
+  padding: 2.5rem;
+  border-radius: 1.2rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  max-width: 560px;
+  width: 100%;
+  text-align: center;
+  border: 3px solid #14b8a6;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+}
+.card h2 {
+  color: #0c4a6e;
+  margin-bottom: 1.5rem;
+  font-size: 1.8rem;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+.status {
+  font-size: 1.4rem;
+  margin: 1.5rem 0;
+  padding: 1.2rem;
+  border-radius: 0.8rem;
+  font-weight: bold;
+  border: 3px solid #14b8a6;
+  background: linear-gradient(135deg, #f0fdfa 0%, white 100%);
+  transition: all 0.4s ease;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+.status.wet {
+  color: #059669;
+  border-color: #10b981;
+  background: linear-gradient(135deg, #d1fae5 0%, white 100%);
+}
+.status.dry {
+  color: #dc2626;
+  border-color: #ef4444;
+  background: linear-gradient(135deg, #fee2e2 0%, white 100%);
+}
+button {
+  background: linear-gradient(135deg, #0c4a6e 0%, #0284c7 100%);
+  color: white;
+  border: 2px solid #14b8a6;
+  padding: 1rem 1.8rem;
+  font-size: 1.1rem;
+  border-radius: 0.8rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin: 0.5rem;
+  font-weight: bold;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+button:hover {
+  background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
+  color: #0c4a6e;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+button:active {
+  transform: translateY(0);
+}
+footer {
+  background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
+  text-align: center;
+  padding: 1rem;
+  font-size: 1rem;
+  color: white;
+  font-weight: bold;
+  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.1);
+}
+.row {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-top: 1.5rem;
+  flex-wrap: wrap;
+}
+.pill {
+  padding: 0.6rem 1.2rem;
+  border: 2px solid #14b8a6;
+  border-radius: 25px;
+  background: linear-gradient(135deg, white 0%, #f0fdfa 100%);
+  color: #0c4a6e;
+  font-weight: bold;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+.pill:hover {
+  background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
+  color: white;
+  transform: scale(1.05);
+}
+.muted {
+  color: #64748b;
+  font-size: 0.95rem;
+  font-style: italic;
+  margin-top: 1.5rem;
+}
+#track {
+  font-style: italic;
+  color: #0c4a6e;
+  font-weight: 500;
+}
+p strong {
+  color: #0c4a6e;
+}
+
+/* 15‑min timer (top‑right corner) */
+#timerBox {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  padding: 8px 12px;
+  background: #111827;
+  color: #a7f3d0;
+  font-family: monospace;
+  border-radius: 6px;
+  border: 2px solid #10b981;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.25);
+  z-index: 20;
+}
+</style>
 </head>
 <body>
 <header>🌱 Plant Care Dashboard</header>
+
+<div id="timerBox">Timer: --:--</div>
+
 <main>
   <div class="card">
     <h2>Soil Condition</h2>
-    <!-- Removed the extra Gold Highlight badge -->
     <div id="status" class="status">
       Waiting for data…
     </div>
-
     <div class="row">
       <button id="connect">Connect to Arduino</button>
       <button id="toggle-audio">Enable Audio</button>
     </div>
-
     <div style="margin-top: 1.5rem;">
       <p><strong>Now Playing:</strong> <span id="track">None</span></p>
       <div class="row">
-        <!-- Removed the Theme pill; only Serial status remains -->
         <span class="pill" id="serial-pill">Serial: disconnected</span>
       </div>
     </div>
-
-    <p class="muted" style="margin-top:1rem;">
-    </p>
+    <p class="muted" style="margin-top:1rem;"></p>
   </div>
 </main>
 
 <footer>Made with 💛 for your plants • classic look, modern brains</footer>
 
 <script>
-/* AUDIO ENGINE (same as before) */
-let audioCtx;
-let masterGain;
-let activeNodes = [];
-
-async function ensureAudio() {
-  if (!audioCtx) {
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    masterGain = audioCtx.createGain();
-    masterGain.gain.value = 0.3;
-    masterGain.connect(audioCtx.destination);
-  }
-  if (audioCtx.state === "suspended") await audioCtx.resume();
-}
+/* AUDIO ENGINE - MP3 PLAYBACK */
+let currentAudio = null;
 
 function stopAll() {
-  activeNodes.forEach(n => { try { n.stop ? n.stop() : n.disconnect(); } catch(e){} });
-  activeNodes = [];
+  if (currentAudio) {
+    currentAudio.pause();
+    currentAudio.currentTime = 0;
+    currentAudio = null;
+  }
 }
 
-async function play432() {
-  await ensureAudio();
+async function playHappy() {
   stopAll();
-
-  const osc = audioCtx.createOscillator();
-  osc.type = "sine";
-  osc.frequency.setValueAtTime(432, audioCtx.currentTime);
-  osc.connect(masterGain);
-  osc.start();
-  activeNodes.push(osc);
+  
+  currentAudio = new Audio('https://github.com/Vedharsh7373/soilsymphony/raw/main/OneRepublic_-_I_Aint_Worried.mp3');
+  currentAudio.loop = true;
+  currentAudio.volume = 0.5;
+  
+  try {
+    await currentAudio.play();
+  } catch (err) {
+    console.error('Error playing happy music:', err);
+  }
 }
 
 async function playSad() {
-  await ensureAudio();
   stopAll();
-
-  const tempo = 60;
-  const beat = 60 / tempo;
-  const notes = [220, 261.63, 329.63, 261.63, 207.65, 261.63];
-
-  let time = audioCtx.currentTime + 0.05;
-
-  function schedule() {
-    notes.forEach((f, i) => {
-      const start = time + i * beat;
-      const dur = beat * 0.9;
-
-      const osc = audioCtx.createOscillator();
-      osc.frequency.value = f;
-      osc.type = "sine";
-
-      const g = audioCtx.createGain();
-      g.gain.setValueAtTime(0.0001, start);
-      g.gain.exponentialRampToValueAtTime(0.6, start + 0.1);
-      g.gain.exponentialRampToValueAtTime(0.0001, start + dur);
-
-      osc.connect(g).connect(masterGain);
-      osc.start(start);
-      osc.stop(start + dur);
-
-      activeNodes.push(osc);
-    });
-    time += notes.length * beat;
+  
+  currentAudio = new Audio('https://github.com/Vedharsh7373/soilsymphony/raw/main/Coldplay%20-%20Hymn%20For%20The%20Weekend.mp3');
+  currentAudio.loop = true;
+  currentAudio.volume = 0.5;
+  
+  try {
+    await currentAudio.play();
+  } catch (err) {
+    console.error('Error playing sad music:', err);
   }
-
-  const loop = setInterval(schedule, notes.length * beat * 1000);
-  schedule();
-  activeNodes.push({ stop: () => clearInterval(loop) });
 }
 
 /* UI updates */
 const statusDiv = document.getElementById("status");
 const track = document.getElementById("track");
 const serialPill = document.getElementById("serial-pill");
+const timerBox = document.getElementById("timerBox");
+
+let timerInterval = null;
+let remainingMs = 0;
+
+function updateTimerDisplay() {
+  const totalSec = Math.floor(remainingMs / 1000);
+  const min = String(Math.floor(totalSec / 60)).padStart(2, "0");
+  const sec = String(totalSec % 60).padStart(2, "0");
+  timerBox.textContent = `Timer: ${min}:${sec}`;
+}
+
+function startCountdown(ms) {
+  if (timerInterval) clearInterval(timerInterval);
+  remainingMs = ms;
+  updateTimerDisplay();
+  timerInterval = setInterval(() => {
+    remainingMs -= 1000;
+    if (remainingMs <= 0) {
+      remainingMs = 0;
+      clearInterval(timerInterval);
+    }
+    updateTimerDisplay();
+  }, 1000);
+}
+
+function resetCountdown() {
+  if (timerInterval) clearInterval(timerInterval);
+  remainingMs = 0;
+  updateTimerDisplay();
+}
 
 function setWet() {
   statusDiv.textContent = "Plant is Happy (Wet)";
   statusDiv.className = "status wet";
-  play432();
-  track.textContent = "432 Hz Calming Tone";
+  playHappy();
+  track.textContent = "I Ain't Worried - OneRepublic";
 }
 
 function setDry() {
   statusDiv.textContent = "Plant is Sad (Dry)";
   statusDiv.className = "status dry";
   playSad();
-  track.textContent = "Sad Melody";
+  track.textContent = "Hymn for the Weekend - Coldplay";
 }
 
 function setPumpOn() {
@@ -278,32 +289,47 @@ function setPumpOn() {
 /* SERIAL CONNECTION */
 document.getElementById("connect").addEventListener("click", async () => {
   try {
+    if (!("serial" in navigator)) {
+      alert("Web Serial API not supported in this browser.");
+      return;
+    }
     const port = await navigator.serial.requestPort();
     await port.open({ baudRate: 115200 });
-
     serialPill.textContent = "Serial: connected";
 
     const decoder = new TextDecoderStream();
     port.readable.pipeTo(decoder.writable);
     const reader = decoder.readable.getReader();
-
     let buffer = "";
 
     while (true) {
       const { value, done } = await reader.read();
       if (done) break;
       if (!value) continue;
-
       buffer += value;
-
       let idx;
       while ((idx = buffer.indexOf("\n")) >= 0) {
         const line = buffer.slice(0, idx).trim();
         buffer = buffer.slice(idx + 1);
 
+        // Old keywords for audio / status
         if (line.includes("WET")) setWet();
         else if (line.includes("DRY")) setDry();
         else if (line.includes("PUMP_ON")) setPumpOn();
+
+        // New STATE messages for timer
+        if (line.startsWith("STATE:")) {
+          const state = line.substring(6);
+          if (state === "DRY_START") {
+            // start 15‑minute countdown
+            startCountdown(15 * 60 * 1000);
+          } else if (state === "PUMP_ON") {
+            remainingMs = 0;
+            updateTimerDisplay();
+          } else if (state === "PUMP_OFF" || state === "WET" || state === "MOIST") {
+            resetCountdown();
+          }
+        }
       }
     }
   } catch (err) {
@@ -311,8 +337,13 @@ document.getElementById("connect").addEventListener("click", async () => {
     console.error(err);
   }
 });
-</script>
 
+/* Enable audio button (just resumes context) */
+document.getElementById("toggle-audio").addEventListener("click", async () => {
+  if (currentAudio && currentAudio.paused) {
+    await currentAudio.play();
+  }
+});
+</script>
 </body>
 </html>
-```
