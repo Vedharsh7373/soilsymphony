@@ -218,12 +218,13 @@ async function playSad() {
   if (!audioEnabled) return;
   stopAll();
   currentAudio = new Audio(
-    "https://github.com/Vedharsh7373/soilsymphony/blob/main/Record%20(online-voice-recorder.com).mp3"
+    "https://raw.githubusercontent.com/Vedharsh7373/soilsymphony/main/Record%20(online-voice-recorder.com).mp3"
   );
   currentAudio.loop = true;
   currentAudio.volume = 0.5;
   try { await currentAudio.play(); } catch (err) { console.error(err); }
 }
+
 
 /* UI + timer */
 const statusDiv = document.getElementById("status");
