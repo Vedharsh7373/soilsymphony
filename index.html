@@ -1,1 +1,477 @@
-<!DOCTYPE html> <html lang="en"> <head> <meta charset="UTF-8" /> <meta name="viewport" content="width=device-width, initial-scale=1.0" /> <title>Plant Care Dashboard</title> <style> :root { color-scheme: light; } body { font-family: "Segoe UI", Arial, sans-serif; margin: 0; padding: 0; background: linear-gradient(135deg, #0c4a6e 0%, #0284c7 100%); color: #0c4a6e; display: flex; flex-direction: column; min-height: 100vh; } header { background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%); color: white; padding: 1.5rem 2rem; text-align: center; font-size: 2rem; font-weight: bold; letter-spacing: 1px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); position: relative; z-index: 10; } main { flex: 1; display: flex; justify-content: center; align-items: center; padding: 2rem; } .card { background: white; padding: 2.5rem; border-radius: 1.2rem; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15); max-width: 560px; width: 100%; text-align: center; border: 3px solid #14b8a6; transition: transform 0.3s ease, box-shadow 0.3s ease; } .card:hover { transform: translateY(-5px); box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2); } .card h2 { color: #0c4a6e; margin-bottom: 1.5rem; font-size: 1.8rem; text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); } .status { font-size: 1.4rem; margin: 1.5rem 0; padding: 1.2rem; border-radius: 0.8rem; font-weight: bold; border: 3px solid #14b8a6; background: linear-gradient(135deg, #f0fdfa 0%, white 100%); transition: all 0.4s ease; box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05); } .status.wet { color: #059669; border-color: #10b981; background: linear-gradient(135deg, #d1fae5 0%, white 100%); } .status.dry { color: #dc2626; border-color: #ef4444; background: linear-gradient(135deg, #fee2e2 0%, white 100%); } button { background: linear-gradient(135deg, #0c4a6e 0%, #0284c7 100%); color: white; border: 2px solid #14b8a6; padding: 1rem 1.8rem; font-size: 1.1rem; border-radius: 0.8rem; cursor: pointer; transition: all 0.3s ease; margin: 0.5rem; font-weight: bold; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); } button:hover { background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%); color: #0c4a6e; transform: translateY(-2px); box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15); } button:active { transform: translateY(0); } footer { background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%); text-align: center; padding: 1rem; font-size: 1rem; color: white; font-weight: bold; box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.1); } .row { display: flex; gap: 1rem; justify-content: center; margin-top: 1.5rem; flex-wrap: wrap; } .pill { padding: 0.6rem 1.2rem; border: 2px solid #14b8a6; border-radius: 25px; background: linear-gradient(135deg, white 0%, #f0fdfa 100%); color: #0c4a6e; font-weight: bold; font-size: 1rem; transition: all 0.3s ease; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1); } .pill:hover { background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%); color: white; transform: scale(1.05); } .muted { color: #64748b; font-size: 0.95rem; font-style: italic; margin-top: 1.5rem; } #track { font-style: italic; color: #0c4a6e; font-weight: 500; } p strong { color: #0c4a6e; } /* 15‑min timer (top‑right corner) */ #timerBox { position: fixed; top: 10px; right: 10px; padding: 8px 12px; background: #111827; color: #a7f3d0; font-family: monospace; border-radius: 6px; border: 2px solid #10b981; box-shadow: 0 4px 10px rgba(0,0,0,0.25); z-index: 20; } </style> </head> <body> <header>🌱 Plant Care Dashboard</header> <div id="timerBox">Timer: --:--</div> <main> <div class="card"> <h2>Soil Condition</h2> <div id="status" class="status"> Waiting for data… </div> <div class="row"> <button id="connect">Connect to Arduino</button> <button id="toggle-audio">Enable Audio</button> </div> <div style="margin-top: 1.5rem;"> <p><strong>Now Playing:</strong> <span id="track">None</span></p> <div class="row"> <span class="pill" id="serial-pill">Serial: disconnected</span> </div> </div> <p class="muted" style="margin-top:1rem;"></p> </div> </main> <footer>Made with 💛 for your plants • classic look, modern brains</footer> <script> /* AUDIO ENGINE - MP3 PLAYBACK */ let currentAudio = null; function stopAll() { if (currentAudio) { currentAudio.pause(); currentAudio.currentTime = 0; currentAudio = null; } } let audioEnabled = false; async function playHappy() { if (!audioEnabled) return; stopAll(); currentAudio = new Audio( "https://github.com/Vedharsh7373/soilsymphony/raw/main/432%20Hz%20-%20Positive%20Energy%20Meditation%20Music%20Deep%20Healing%20Music%20for%20The%20Body%20and%20Soul.mp3" ); currentAudio.loop = true; currentAudio.volume = 0.5; try { await currentAudio.play(); } catch (err) { console.error(err); } } async function playSad() { if (!audioEnabled) return; stopAll(); currentAudio = new Audio( "https://raw.githubusercontent.com/Vedharsh7373/soilsymphony/main/Record%20(online-voice-recorder.com).mp3" ); currentAudio.loop = true; currentAudio.volume = 0.5; try { await currentAudio.play(); } catch (err) { console.error(err); } } /* UI + timer */ const statusDiv = document.getElementById("status"); const track = document.getElementById("track"); const serialPill = document.getElementById("serial-pill"); const timerBox = document.getElementById("timerBox"); const audioBtn = document.getElementById("toggle-audio"); let timerInterval = null; let remainingMs = 0; let currentMood = null; // "wet" or "dry" let timerRunning = false; // to avoid restarting timer every DRY tick let writer = null; // serial writer function updateTimerDisplay() { const totalSec = Math.floor(remainingMs / 1000); const min = String(Math.floor(totalSec / 60)).padStart(2, "0"); const sec = String(totalSec % 60).padStart(2, "0"); timerBox.textContent = `Timer: ${min}:${sec}`; } function startCountdown(ms) { if (timerRunning) return; // already running timerRunning = true; if (timerInterval) clearInterval(timerInterval); remainingMs = ms; updateTimerDisplay(); timerInterval = setInterval(async () => { remainingMs -= 1000; if (remainingMs <= 0) { remainingMs = 0; clearInterval(timerInterval); timerInterval = null; timerRunning = false; updateTimerDisplay(); // TIME IS UP -> tell Arduino to turn pump ON if (writer) { try { await writer.write("PUMP_ON\n"); } catch (e) { console.error("Failed to send PUMP_ON:", e); } } } else { updateTimerDisplay(); } }, 1000); } function resetCountdown() { if (timerInterval) clearInterval(timerInterval); timerInterval = null; timerRunning = false; remainingMs = 0; updateTimerDisplay(); } function setWet() { if (currentMood === "wet") return; currentMood = "wet"; statusDiv.textContent = "Plant is Happy (Wet)"; statusDiv.className = "status wet"; playHappy(); track.textContent = "432 Hz – Music For Plant Growth"; resetCountdown(); } function setDry() { if (currentMood === "dry") return; currentMood = "dry"; statusDiv.textContent = "Plant is Sad (Dry)"; statusDiv.className = "status dry"; playSad(); track.textContent = "A Cry For Help"; } function setPumpOn() { statusDiv.textContent = "Pump Activated 💧"; statusDiv.className = "status wet"; track.textContent = "Pump working (music continues)"; } /* SERIAL CONNECTION */ document.getElementById("connect").addEventListener("click", async () => { try { if (!("serial" in navigator)) { alert("Web Serial API not supported in this browser."); return; } const port = await navigator.serial.requestPort(); await port.open({ baudRate: 115200 }); serialPill.textContent = "Serial: connected"; // writer to send commands const textEncoder = new TextEncoderStream(); textEncoder.readable.pipeTo(port.writable); writer = textEncoder.writable.getWriter(); // reader to receive data const decoder = new TextDecoderStream(); port.readable.pipeTo(decoder.writable); const reader = decoder.readable.getReader(); let buffer = ""; while (true) { const { value, done } = await reader.read(); if (done) break; if (!value) continue; buffer += value; let idx; while ((idx = buffer.indexOf("\n")) >= 0) { const line = buffer.slice(0, idx).trim(); buffer = buffer.slice(idx + 1); // For debugging if needed: // console.log("SERIAL:", line); if (line.includes("WET")) setWet(); else if (line.includes("DRY")) setDry(); else if (line.includes("PUMP_ON")) setPumpOn(); if (line.startsWith("STATE:")) { const state = line.substring(6); if (state === "DRY") { // start 15‑minute countdown ONCE while it remains dry startCountdown(15 * 60 * 1000); } else if (state === "WET" || state === "MOIST" || state === "PUMP_OFF") { resetCountdown(); } } } } } catch (err) { serialPill.textContent = "Serial: failed"; console.error(err); } }); /* Enable/disable audio */ audioBtn.addEventListener("click", () => { if (!audioEnabled) { audioEnabled = true; audioBtn.textContent = "Disable Audio"; audioBtn.style.background = "linear-gradient(135deg, #dc2626 0%, #ef4444 100%)"; audioBtn.style.borderColor = "#ef4444"; track.textContent = "Audio enabled - waiting for plant status"; } else { stopAll(); audioEnabled = false; audioBtn.textContent = "Enable Audio"; audioBtn.style.background = "linear-gradient(135deg, #0c4a6e 0%, #0284c7 100%)"; audioBtn.style.borderColor = "#14b8a6"; track.textContent = "Audio disabled"; } }); </script> </body> </html> <script async data-explicit-opt-in="true" data-cookie-opt-in="true" data-deployment-id="dpl_37yBsHb2AWPxbkc27i4ckp4Yta6X" src="https://vercel.live/_next-live/feedback/feedback.js"></script> 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Plant Care Dashboard</title>
+  <style>
+    :root {
+      color-scheme: light;
+    }
+    body {
+      font-family: "Segoe UI", Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(135deg, #0c4a6e 0%, #0284c7 100%);
+      color: #0c4a6e;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    header {
+      background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
+      color: white;
+      padding: 1.5rem 2rem;
+      text-align: center;
+      font-size: 2rem;
+      font-weight: bold;
+      letter-spacing: 1px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      position: relative;
+      z-index: 10;
+    }
+    main {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 2rem;
+    }
+    .card {
+      background: white;
+      padding: 2.5rem;
+      border-radius: 1.2rem;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+      max-width: 560px;
+      width: 100%;
+      text-align: center;
+      border: 3px solid #14b8a6;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+    }
+    .card h2 {
+      color: #0c4a6e;
+      margin-bottom: 1.5rem;
+      font-size: 1.8rem;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    .status {
+      font-size: 1.4rem;
+      margin: 1.5rem 0;
+      padding: 1.2rem;
+      border-radius: 0.8rem;
+      font-weight: bold;
+      border: 3px solid #14b8a6;
+      background: linear-gradient(135deg, #f0fdfa 0%, white 100%);
+      transition: all 0.4s ease;
+      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+    .status.wet {
+      color: #059669;
+      border-color: #10b981;
+      background: linear-gradient(135deg, #d1fae5 0%, white 100%);
+    }
+    .status.dry {
+      color: #dc2626;
+      border-color: #ef4444;
+      background: linear-gradient(135deg, #fee2e2 0%, white 100%);
+    }
+    .status.pump {
+      color: #0284c7;
+      border-color: #0ea5e9;
+      background: linear-gradient(135deg, #e0f2fe 0%, white 100%);
+    }
+    button {
+      background: linear-gradient(135deg, #0c4a6e 0%, #0284c7 100%);
+      color: white;
+      border: 2px solid #14b8a6;
+      padding: 1rem 1.8rem;
+      font-size: 1.1rem;
+      border-radius: 0.8rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin: 0.5rem;
+      font-weight: bold;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    button:hover {
+      background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
+      color: #0c4a6e;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+    }
+    button:active {
+      transform: translateY(0);
+    }
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+    footer {
+      background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
+      text-align: center;
+      padding: 1rem;
+      font-size: 1rem;
+      color: white;
+      font-weight: bold;
+      box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.1);
+    }
+    .row {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      margin-top: 1.5rem;
+      flex-wrap: wrap;
+    }
+    .pill {
+      padding: 0.6rem 1.2rem;
+      border: 2px solid #14b8a6;
+      border-radius: 25px;
+      background: linear-gradient(135deg, white 0%, #f0fdfa 100%);
+      color: #0c4a6e;
+      font-weight: bold;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    }
+    .pill.active {
+      background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
+      color: white;
+    }
+    .muted {
+      color: #64748b;
+      font-size: 0.95rem;
+      font-style: italic;
+      margin-top: 1.5rem;
+    }
+    #track {
+      font-style: italic;
+      color: #0c4a6e;
+      font-weight: 500;
+    }
+    p strong {
+      color: #0c4a6e;
+    }
+    #timerBox {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      padding: 8px 12px;
+      background: #111827;
+      color: #a7f3d0;
+      font-family: monospace;
+      border-radius: 6px;
+      border: 2px solid #10b981;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.25);
+      z-index: 20;
+      font-size: 14px;
+    }
+    .log {
+      margin-top: 1rem;
+      padding: 0.5rem;
+      background: #f8fafc;
+      border-radius: 0.5rem;
+      font-size: 0.85rem;
+      color: #475569;
+      max-height: 100px;
+      overflow-y: auto;
+      text-align: left;
+    }
+  </style>
+</head>
+<body>
+  <header>🌱 Plant Care Dashboard</header>
+  <div id="timerBox">Timer: --:--</div>
+  
+  <main>
+    <div class="card">
+      <h2>Soil Condition</h2>
+      <div id="status" class="status">
+        Waiting for data…
+      </div>
+      
+      <div class="row">
+        <button id="connect">Connect to Arduino</button>
+        <button id="toggle-audio">Enable Audio</button>
+      </div>
+      
+      <div style="margin-top: 1.5rem;">
+        <p><strong>Now Playing:</strong> <span id="track">None</span></p>
+        <div class="row">
+          <span class="pill" id="serial-pill">Serial: disconnected</span>
+        </div>
+      </div>
+      
+      <div class="log" id="log">Console: Ready...</div>
+    </div>
+  </main>
+  
+  <footer>Made with 💛 for your plants • classic look, modern brains</footer>
+
+  <script>
+    // Logging utility
+    function log(msg) {
+      const logDiv = document.getElementById("log");
+      const time = new Date().toLocaleTimeString();
+      logDiv.textContent = `[${time}] ${msg}`;
+      console.log(msg);
+    }
+
+    /* AUDIO ENGINE */
+    let currentAudio = null;
+    let audioEnabled = false;
+
+    function stopAll() {
+      if (currentAudio) {
+        currentAudio.pause();
+        currentAudio.currentTime = 0;
+        currentAudio = null;
+      }
+    }
+
+    async function playHappy() {
+      if (!audioEnabled) {
+        log("Audio disabled, skipping happy music");
+        return;
+      }
+      stopAll();
+      currentAudio = new Audio(
+        "https://github.com/Vedharsh7373/soilsymphony/raw/main/432%20Hz%20-%20Positive%20Energy%20Meditation%20Music%20Deep%20Healing%20Music%20for%20The%20Body%20and%20Soul.mp3"
+      );
+      currentAudio.loop = true;
+      currentAudio.volume = 0.5;
+      try {
+        await currentAudio.play();
+        log("Playing happy music");
+      } catch (err) {
+        log("Audio playback failed: " + err.message);
+      }
+    }
+
+    async function playSad() {
+      if (!audioEnabled) {
+        log("Audio disabled, skipping sad music");
+        return;
+      }
+      stopAll();
+      currentAudio = new Audio(
+        "https://raw.githubusercontent.com/Vedharsh7373/soilsymphony/main/Record%20(online-voice-recorder.com).mp3"
+      );
+      currentAudio.loop = true;
+      currentAudio.volume = 0.5;
+      try {
+        await currentAudio.play();
+        log("Playing sad music");
+      } catch (err) {
+        log("Audio playback failed: " + err.message);
+      }
+    }
+
+    /* UI + Timer */
+    const statusDiv = document.getElementById("status");
+    const track = document.getElementById("track");
+    const serialPill = document.getElementById("serial-pill");
+    const timerBox = document.getElementById("timerBox");
+    const audioBtn = document.getElementById("toggle-audio");
+    const connectBtn = document.getElementById("connect");
+
+    let timerInterval = null;
+    let remainingMs = 0;
+    let currentMood = null;
+    let timerRunning = false;
+    let writer = null;
+    let port = null;
+
+    function updateTimerDisplay() {
+      const totalSec = Math.floor(remainingMs / 1000);
+      const min = String(Math.floor(totalSec / 60)).padStart(2, "0");
+      const sec = String(totalSec % 60).padStart(2, "0");
+      timerBox.textContent = `Timer: ${min}:${sec}`;
+    }
+
+    function startCountdown(ms) {
+      if (timerRunning) {
+        log("Timer already running");
+        return;
+      }
+      log("Starting 15-minute countdown");
+      timerRunning = true;
+      if (timerInterval) clearInterval(timerInterval);
+      remainingMs = ms;
+      updateTimerDisplay();
+      
+      timerInterval = setInterval(async () => {
+        remainingMs -= 1000;
+        if (remainingMs <= 0) {
+          remainingMs = 0;
+          clearInterval(timerInterval);
+          timerInterval = null;
+          timerRunning = false;
+          updateTimerDisplay();
+          
+          log("Timer expired! Sending PUMP_ON command");
+          if (writer) {
+            try {
+              await writer.write("PUMP_ON\n");
+              log("PUMP_ON command sent");
+            } catch (e) {
+              log("Failed to send PUMP_ON: " + e.message);
+            }
+          }
+        } else {
+          updateTimerDisplay();
+        }
+      }, 1000);
+    }
+
+    function resetCountdown() {
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        log("Timer reset");
+      }
+      timerInterval = null;
+      timerRunning = false;
+      remainingMs = 0;
+      updateTimerDisplay();
+    }
+
+    function setWet() {
+      if (currentMood === "wet") return;
+      currentMood = "wet";
+      statusDiv.textContent = "Plant is Happy 😊 (Wet)";
+      statusDiv.className = "status wet";
+      playHappy();
+      track.textContent = "432 Hz – Music For Plant Growth";
+      resetCountdown();
+      log("State: WET");
+    }
+
+    function setDry() {
+      if (currentMood === "dry") return;
+      currentMood = "dry";
+      statusDiv.textContent = "Plant is Sad 😢 (Dry)";
+      statusDiv.className = "status dry";
+      playSad();
+      track.textContent = "A Cry For Help";
+      log("State: DRY");
+    }
+
+    function setPumpOn() {
+      statusDiv.textContent = "Pump Activated 💧";
+      statusDiv.className = "status pump";
+      track.textContent = "Watering in progress...";
+      log("State: PUMP_ON");
+    }
+
+    /* SERIAL CONNECTION */
+    connectBtn.addEventListener("click", async () => {
+      try {
+        if (!("serial" in navigator)) {
+          alert("Web Serial API not supported. Use Chrome/Edge.");
+          return;
+        }
+
+        if (port) {
+          log("Already connected");
+          return;
+        }
+
+        log("Requesting serial port...");
+        port = await navigator.serial.requestPort();
+        await port.open({ baudRate: 115200 });
+        
+        serialPill.textContent = "Serial: connected";
+        serialPill.classList.add("active");
+        connectBtn.disabled = true;
+        log("Connected to Arduino");
+
+        // Writer
+        const textEncoder = new TextEncoderStream();
+        const writableStreamClosed = textEncoder.readable.pipeTo(port.writable);
+        writer = textEncoder.writable.getWriter();
+
+        // Reader
+        const textDecoder = new TextDecoderStream();
+        const readableStreamClosed = port.readable.pipeTo(textDecoder.writable);
+        const reader = textDecoder.readable.getReader();
+
+        let buffer = "";
+        
+        // Read loop
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) {
+            log("Serial connection closed");
+            break;
+          }
+          if (!value) continue;
+
+          buffer += value;
+          let idx;
+          
+          while ((idx = buffer.indexOf("\n")) >= 0) {
+            const line = buffer.slice(0, idx).trim();
+            buffer = buffer.slice(idx + 1);
+            
+            if (!line) continue;
+            
+            log("RX: " + line);
+
+            // Parse incoming messages
+            if (line.includes("WET") || line.includes("MOIST")) {
+              setWet();
+            } else if (line.includes("DRY")) {
+              setDry();
+            } else if (line.includes("PUMP_ON")) {
+              setPumpOn();
+            }
+
+            // Handle STATE messages
+            if (line.startsWith("STATE:")) {
+              const state = line.substring(6).trim();
+              if (state === "DRY") {
+                startCountdown(15 * 60 * 1000); // 15 minutes
+              } else if (state === "WET" || state === "MOIST") {
+                resetCountdown();
+              }
+            }
+          }
+        }
+      } catch (err) {
+        serialPill.textContent = "Serial: failed";
+        serialPill.classList.remove("active");
+        connectBtn.disabled = false;
+        log("Error: " + err.message);
+        port = null;
+        writer = null;
+      }
+    });
+
+    /* Enable/Disable Audio */
+    audioBtn.addEventListener("click", () => {
+      if (!audioEnabled) {
+        audioEnabled = true;
+        audioBtn.textContent = "Disable Audio";
+        audioBtn.style.background = "linear-gradient(135deg, #dc2626 0%, #ef4444 100%)";
+        audioBtn.style.borderColor = "#ef4444";
+        track.textContent = "Audio enabled - waiting for plant status";
+        log("Audio enabled");
+      } else {
+        stopAll();
+        audioEnabled = false;
+        audioBtn.textContent = "Enable Audio";
+        audioBtn.style.background = "linear-gradient(135deg, #0c4a6e 0%, #0284c7 100%)";
+        audioBtn.style.borderColor = "#14b8a6";
+        track.textContent = "Audio disabled";
+        log("Audio disabled");
+      }
+    });
+
+    log("Dashboard ready. Click 'Connect to Arduino' to begin.");
+  </script>
+</body>
+</html>
