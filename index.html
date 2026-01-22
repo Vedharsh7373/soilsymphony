@@ -385,9 +385,9 @@
         manualPumpBtn.disabled = false;
         log("Connected to Arduino");
 
-        // Writer
+        // Writer setup
         const textEncoder = new TextEncoderStream();
-        const writableStreamClosed = textEncoder.readable.pipeTo(port.writable);
+        textEncoder.readable.pipeTo(port.writable);
         writer = textEncoder.writable.getWriter();
 
         // Reader
@@ -451,26 +451,30 @@
     /* Manual Pump Control */
     manualPumpBtn.addEventListener("click", async () => {
       if (!writer) {
-        log("No serial connection");
+        log("ERROR: No serial connection");
+        alert("Please connect to Arduino first!");
         return;
       }
       
       // Disable button during watering
       manualPumpBtn.disabled = true;
+      manualPumpBtn.textContent = "Watering... 💧";
       setPumpOn();
-      log("Manual pump ON - watering for 5 seconds");
       
       try {
-        // Send PUMP_ON command (writer already handles encoding)
+        // Send PUMP_ON command
+        log("Sending: PUMP_ON");
         await writer.write("PUMP_ON\n");
-        log("TX: PUMP_ON");
+        log("✓ TX: PUMP_ON sent successfully");
         
         // Auto turn off after 5 seconds
         setTimeout(async () => {
           try {
+            log("Sending: PUMP_OFF");
             await writer.write("PUMP_OFF\n");
-            log("TX: PUMP_OFF");
+            log("✓ TX: PUMP_OFF sent successfully");
             manualPumpBtn.disabled = false;
+            manualPumpBtn.textContent = "Manual Water 💧";
             
             // Return to previous state
             if (currentMood === "wet") {
@@ -478,18 +482,21 @@
             } else if (currentMood === "dry") {
               setDry();
             } else {
-              statusDiv.textContent = "Manual watering complete";
+              statusDiv.textContent = "Manual watering complete ✓";
               statusDiv.className = "status";
-              track.textContent = "None";
+              track.textContent = "Standby";
             }
           } catch (e) {
-            log("Failed to send PUMP_OFF: " + e.message);
+            log("ERROR sending PUMP_OFF: " + e.message);
             manualPumpBtn.disabled = false;
+            manualPumpBtn.textContent = "Manual Water 💧";
           }
         }, 5000);
       } catch (e) {
-        log("Failed to send PUMP_ON: " + e.message);
+        log("ERROR sending PUMP_ON: " + e.message);
+        alert("Failed to send command: " + e.message);
         manualPumpBtn.disabled = false;
+        manualPumpBtn.textContent = "Manual Water 💧";
       }
     });
 
