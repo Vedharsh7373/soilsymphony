@@ -456,6 +456,9 @@
         return;
       }
       
+      // Save current mood before watering
+      const savedMood = currentMood;
+      
       // Disable button during watering
       manualPumpBtn.disabled = true;
       manualPumpBtn.textContent = "Watering... 💧";
@@ -476,15 +479,16 @@
             manualPumpBtn.disabled = false;
             manualPumpBtn.textContent = "Manual Water 💧";
             
-            // Return to previous state
-            if (currentMood === "wet") {
+            // Return to the plant's actual state
+            if (savedMood === "wet") {
               setWet();
-            } else if (currentMood === "dry") {
+            } else if (savedMood === "dry") {
               setDry();
             } else {
-              statusDiv.textContent = "Manual watering complete ✓";
+              // If no previous state, show neutral
+              statusDiv.textContent = "Waiting for data…";
               statusDiv.className = "status";
-              track.textContent = "Standby";
+              track.textContent = "None";
             }
           } catch (e) {
             log("ERROR sending PUMP_OFF: " + e.message);
