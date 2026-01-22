@@ -455,23 +455,38 @@
         return;
       }
       
+      // Disable button during watering
+      manualPumpBtn.disabled = true;
       setPumpOn();
-      log("Manual pump ON");
+      log("Manual pump ON - watering for 5 seconds");
       
       try {
-        await writer.write("PUMP_ON\n");
+        // Send PUMP_ON command with proper encoding
+        const encoder = new TextEncoder();
+        await writer.write(encoder.encode("PUMP_ON\n"));
+        log("PUMP_ON command sent to Arduino");
         
         // Auto turn off after 5 seconds
         setTimeout(async () => {
           try {
-            await writer.write("PUMP_OFF\n");
-            log("Manual pump OFF (auto)");
+            await writer.write(encoder.encode("PUMP_OFF\n"));
+            log("PUMP_OFF command sent to Arduino");
+            manualPumpBtn.disabled = false;
+            
+            // Return to previous state
+            if (currentMood === "wet") {
+              setWet();
+            } else if (currentMood === "dry") {
+              setDry();
+            }
           } catch (e) {
             log("Failed to send PUMP_OFF: " + e.message);
+            manualPumpBtn.disabled = false;
           }
         }, 5000);
       } catch (e) {
         log("Failed to send PUMP_ON: " + e.message);
+        manualPumpBtn.disabled = false;
       }
     });
 
