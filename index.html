@@ -97,19 +97,17 @@
       font-weight: bold;
       box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     }
-    button:hover {
+    button:hover:not(:disabled) {
       background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
-      color: #0c4a6e;
       transform: translateY(-2px);
       box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
     }
-    button:active {
+    button:active:not(:disabled) {
       transform: translateY(0);
     }
     button:disabled {
       opacity: 0.5;
       cursor: not-allowed;
-      transform: none;
     }
     footer {
       background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
@@ -141,12 +139,6 @@
     .pill.active {
       background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
       color: white;
-    }
-    .muted {
-      color: #64748b;
-      font-size: 0.95rem;
-      font-style: italic;
-      margin-top: 1.5rem;
     }
     #track {
       font-style: italic;
@@ -211,7 +203,7 @@
     </div>
   </main>
   
-  <footer>Made with 💛 for your plants • classic look, modern brains</footer>
+  <footer>Made with 💛 for your plants</footer>
 
   <script>
     // Logging utility
@@ -279,6 +271,7 @@
     const timerBox = document.getElementById("timerBox");
     const audioBtn = document.getElementById("toggle-audio");
     const connectBtn = document.getElementById("connect");
+    const manualPumpBtn = document.getElementById("manual-pump");
 
     let timerInterval = null;
     let remainingMs = 0;
@@ -337,7 +330,7 @@
       timerInterval = null;
       timerRunning = false;
       remainingMs = 0;
-      updateTimerDisplay();
+      timerBox.textContent = "Timer: --:--";
     }
 
     function setWet() {
@@ -358,6 +351,7 @@
       statusDiv.className = "status dry";
       playSad();
       track.textContent = "A Cry For Help";
+      startCountdown(15 * 60 * 1000); // Start 15-minute timer
       log("State: DRY");
     }
 
@@ -388,6 +382,7 @@
         serialPill.textContent = "Serial: connected";
         serialPill.classList.add("active");
         connectBtn.disabled = true;
+        manualPumpBtn.disabled = false;
         log("Connected to Arduino");
 
         // Writer
@@ -435,9 +430,9 @@
             if (line.startsWith("STATE:")) {
               const state = line.substring(6).trim();
               if (state === "DRY") {
-                startCountdown(15 * 60 * 1000); // 15 minutes
+                setDry();
               } else if (state === "WET" || state === "MOIST") {
-                resetCountdown();
+                setWet();
               }
             }
           }
@@ -446,16 +441,45 @@
         serialPill.textContent = "Serial: failed";
         serialPill.classList.remove("active");
         connectBtn.disabled = false;
+        manualPumpBtn.disabled = true;
         log("Error: " + err.message);
         port = null;
         writer = null;
       }
     });
 
+    /* Manual Pump Control */
+    manualPumpBtn.addEventListener("click", async () => {
+      if (!writer) {
+        log("No serial connection");
+        return;
+      }
+      
+      setPumpOn();
+      log("Manual pump ON");
+      
+      try {
+        await writer.write("PUMP_ON\n");
+        
+        // Auto turn off after 5 seconds
+        setTimeout(async () => {
+          try {
+            await writer.write("PUMP_OFF\n");
+            log("Manual pump OFF (auto)");
+          } catch (e) {
+            log("Failed to send PUMP_OFF: " + e.message);
+          }
+        }, 5000);
+      } catch (e) {
+        log("Failed to send PUMP_ON: " + e.message);
+      }
+    });
+
     /* Enable/Disable Audio */
     audioBtn.addEventListener("click", () => {
-      if (!audioEnabled) {
-        audioEnabled = true;
+      audioEnabled = !audioEnabled;
+      
+      if (audioEnabled) {
         audioBtn.textContent = "Disable Audio";
         audioBtn.style.background = "linear-gradient(135deg, #dc2626 0%, #ef4444 100%)";
         audioBtn.style.borderColor = "#ef4444";
@@ -463,11 +487,10 @@
         log("Audio enabled");
       } else {
         stopAll();
-        audioEnabled = false;
         audioBtn.textContent = "Enable Audio";
         audioBtn.style.background = "linear-gradient(135deg, #0c4a6e 0%, #0284c7 100%)";
         audioBtn.style.borderColor = "#14b8a6";
-        track.textContent = "Audio disabled";
+        track.textContent = "None";
         log("Audio disabled");
       }
     });
