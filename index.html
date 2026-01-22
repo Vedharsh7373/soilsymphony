@@ -461,16 +461,15 @@
       log("Manual pump ON - watering for 5 seconds");
       
       try {
-        // Send PUMP_ON command with proper encoding
-        const encoder = new TextEncoder();
-        await writer.write(encoder.encode("PUMP_ON\n"));
-        log("PUMP_ON command sent to Arduino");
+        // Send PUMP_ON command (writer already handles encoding)
+        await writer.write("PUMP_ON\n");
+        log("TX: PUMP_ON");
         
         // Auto turn off after 5 seconds
         setTimeout(async () => {
           try {
-            await writer.write(encoder.encode("PUMP_OFF\n"));
-            log("PUMP_OFF command sent to Arduino");
+            await writer.write("PUMP_OFF\n");
+            log("TX: PUMP_OFF");
             manualPumpBtn.disabled = false;
             
             // Return to previous state
@@ -478,6 +477,10 @@
               setWet();
             } else if (currentMood === "dry") {
               setDry();
+            } else {
+              statusDiv.textContent = "Manual watering complete";
+              statusDiv.className = "status";
+              track.textContent = "None";
             }
           } catch (e) {
             log("Failed to send PUMP_OFF: " + e.message);
