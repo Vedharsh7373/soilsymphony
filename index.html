@@ -270,7 +270,6 @@
     const timerBox = document.getElementById("timerBox");
     const audioBtn = document.getElementById("toggle-audio");
     const connectBtn = document.getElementById("connect");
-    const manualPumpBtn = document.getElementById("manual-pump");
 
     let timerInterval = null;
     let remainingMs = 0;
@@ -381,7 +380,6 @@
         serialPill.textContent = "Serial: connected";
         serialPill.classList.add("active");
         connectBtn.disabled = true;
-        manualPumpBtn.disabled = false;
         log("Connected to Arduino");
 
         // Writer setup
@@ -440,66 +438,9 @@
         serialPill.textContent = "Serial: failed";
         serialPill.classList.remove("active");
         connectBtn.disabled = false;
-        manualPumpBtn.disabled = true;
         log("Error: " + err.message);
         port = null;
         writer = null;
-      }
-    });
-
-    /* Manual Pump Control */
-    manualPumpBtn.addEventListener("click", async () => {
-      if (!writer) {
-        log("ERROR: No serial connection");
-        alert("Please connect to Arduino first!");
-        return;
-      }
-      
-      // Save current mood before watering
-      const savedMood = currentMood;
-      
-      // Disable button during watering
-      manualPumpBtn.disabled = true;
-      manualPumpBtn.textContent = "Watering... 💧";
-      setPumpOn();
-      
-      try {
-        // Send PUMP_ON command
-        log("Sending: PUMP_ON");
-        await writer.write("PUMP_ON\n");
-        log("✓ TX: PUMP_ON sent successfully");
-        
-        // Auto turn off after 5 seconds
-        setTimeout(async () => {
-          try {
-            log("Sending: PUMP_OFF");
-            await writer.write("PUMP_OFF\n");
-            log("✓ TX: PUMP_OFF sent successfully");
-            manualPumpBtn.disabled = false;
-            manualPumpBtn.textContent = "Manual Water 💧";
-            
-            // Return to the plant's actual state
-            if (savedMood === "wet") {
-              setWet();
-            } else if (savedMood === "dry") {
-              setDry();
-            } else {
-              // If no previous state, show neutral
-              statusDiv.textContent = "Waiting for data…";
-              statusDiv.className = "status";
-              track.textContent = "None";
-            }
-          } catch (e) {
-            log("ERROR sending PUMP_OFF: " + e.message);
-            manualPumpBtn.disabled = false;
-            manualPumpBtn.textContent = "Manual Water 💧";
-          }
-        }, 5000);
-      } catch (e) {
-        log("ERROR sending PUMP_ON: " + e.message);
-        alert("Failed to send command: " + e.message);
-        manualPumpBtn.disabled = false;
-        manualPumpBtn.textContent = "Manual Water 💧";
       }
     });
 
