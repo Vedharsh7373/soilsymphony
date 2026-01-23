@@ -290,7 +290,7 @@
         log("Timer already running");
         return;
       }
-      log("Starting 15-minute countdown");
+      log("Starting 5-minute countdown");
       timerRunning = true;
       if (timerInterval) clearInterval(timerInterval);
       remainingMs = ms;
@@ -349,7 +349,7 @@
       statusDiv.className = "status dry";
       playSad();
       track.textContent = "A Cry For Help";
-      startCountdown(15 * 60 * 1000); // Start 15-minute timer
+      startCountdown(5 * 60 * 1000); // Start 5-minute timer
       log("State: DRY");
     }
 
