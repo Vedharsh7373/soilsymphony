@@ -478,6 +478,9 @@
         return;
       }
       
+      // Stop any running timer when manual water is pressed
+      resetCountdown();
+      
       try {
         const encoder = new TextEncoder();
         await writer.write(encoder.encode("SERVO_ON\n"));
