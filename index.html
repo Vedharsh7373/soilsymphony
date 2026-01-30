@@ -161,6 +161,10 @@
       box-shadow: 0 4px 10px rgba(0,0,0,0.25);
       z-index: 20;
       font-size: 14px;
+      cursor: pointer;
+    }
+    #timerBox:hover {
+      background: #1f2937;
     }
     .log {
       margin-top: 1rem;
@@ -173,11 +177,48 @@
       overflow-y: auto;
       text-align: left;
     }
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 100;
+      justify-content: center;
+      align-items: center;
+    }
+    .modal.show {
+      display: flex;
+    }
+    .modal-content {
+      background: white;
+      padding: 2rem;
+      border-radius: 1rem;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+      max-width: 400px;
+      width: 90%;
+      border: 3px solid #14b8a6;
+    }
+    .modal-content h3 {
+      color: #0c4a6e;
+      margin-top: 0;
+    }
+    .modal-content input {
+      width: 100%;
+      padding: 0.8rem;
+      font-size: 1.1rem;
+      border: 2px solid #14b8a6;
+      border-radius: 0.5rem;
+      margin: 1rem 0;
+      box-sizing: border-box;
+    }
   </style>
 </head>
 <body>
   <header>🌱 Plant Care Dashboard</header>
-  <div id="timerBox">Timer: --:--</div>
+  <div id="timerBox" title="Click to edit timer">Timer: --:--</div>
   
   <main>
     <div class="card">
@@ -204,6 +245,19 @@
   </main>
   
   <footer>Made with 💛 for your plants</footer>
+
+  <!-- Timer Edit Modal -->
+  <div id="timerModal" class="modal">
+    <div class="modal-content">
+      <h3>⏱️ Edit Timer Duration</h3>
+      <p>Enter minutes (how long to wait before watering):</p>
+      <input type="number" id="timerInput" min="1" max="60" value="5" />
+      <div class="row">
+        <button id="saveTimer">Save</button>
+        <button id="cancelTimer">Cancel</button>
+      </div>
+    </div>
+  </div>
 
   <script>
     // Logging utility
@@ -272,6 +326,10 @@
     const audioBtn = document.getElementById("toggle-audio");
     const connectBtn = document.getElementById("connect");
     const manualWaterBtn = document.getElementById("manual-water");
+    const timerModal = document.getElementById("timerModal");
+    const timerInput = document.getElementById("timerInput");
+    const saveTimerBtn = document.getElementById("saveTimer");
+    const cancelTimerBtn = document.getElementById("cancelTimer");
 
     let timerInterval = null;
     let remainingMs = 0;
@@ -279,6 +337,10 @@
     let timerRunning = false;
     let writer = null;
     let port = null;
+    let timerMinutes = parseInt(localStorage.getItem("timerMinutes")) || 5;
+
+    // Update timer input with saved value
+    timerInput.value = timerMinutes;
 
     function updateTimerDisplay() {
       const totalSec = Math.floor(remainingMs / 1000);
@@ -292,7 +354,7 @@
         log("Timer already running");
         return;
       }
-      log("Starting 5-minute countdown");
+      log(`Starting ${timerMinutes}-minute countdown`);
       timerRunning = true;
       if (timerInterval) clearInterval(timerInterval);
       remainingMs = ms;
@@ -307,19 +369,8 @@
           timerRunning = false;
           updateTimerDisplay();
           
-          log("Timer expired! Sending SERVO_ON command");
-          if (writer) {
-            try {
-              const encoder = new TextEncoder();
-              await writer.write(encoder.encode("SERVO_ON\n"));
-              log("SERVO_ON command sent successfully");
-              setPumpOn();
-            } catch (e) {
-              log("Failed to send SERVO_ON: " + e.message);
-            }
-          } else {
-            log("Error: Serial writer not available");
-          }
+          log("Timer expired! Triggering pump");
+          await activateServo();
         } else {
           updateTimerDisplay();
         }
@@ -334,7 +385,54 @@
       timerInterval = null;
       timerRunning = false;
       remainingMs = 0;
-      timerBox.textContent = "Timer: --:--";
+      timerBox.textContent = `Timer: --:--`;
+    }
+
+    async function activateServo() {
+      if (!writer) {
+        log("Error: Not connected to Arduino");
+        return;
+      }
+
+      try {
+        setPumpOn();
+        
+        // Step 1: Move 23 degrees
+        log("Moving servo to 23°");
+        const encoder = new TextEncoder();
+        await writer.write(encoder.encode("MOVE:23\n"));
+        
+        // Wait 3.5 seconds
+        await new Promise(resolve => setTimeout(resolve, 3500));
+        
+        // Step 2: Move 157 degrees in opposite direction
+        log("Moving servo to -157° (opposite direction)");
+        await writer.write(encoder.encode("MOVE:-157\n"));
+        
+        // Wait for movement
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Step 3: Return to start
+        log("Returning servo to 0°");
+        await writer.write(encoder.encode("MOVE:0\n"));
+        
+        log("Servo sequence complete");
+        
+        // After 4 seconds total, revert status
+        setTimeout(() => {
+          if (currentMood === "wet") {
+            setWet();
+          } else if (currentMood === "dry") {
+            setDry();
+          } else {
+            statusDiv.textContent = "Waiting for sensor update...";
+            statusDiv.className = "status";
+          }
+        }, 4000);
+        
+      } catch (e) {
+        log("Servo control failed: " + e.message);
+      }
     }
 
     function setWet() {
@@ -355,7 +453,7 @@
       statusDiv.className = "status dry";
       playSad();
       track.textContent = "A Cry For Help";
-      startCountdown(5 * 60 * 1000); // Start 5-minute timer
+      startCountdown(timerMinutes * 60 * 1000);
       log("State: DRY");
     }
 
@@ -425,8 +523,6 @@
               setWet();
             } else if (line.includes("DRY")) {
               setDry();
-            } else if (line.includes("SERVO_ON") || line.includes("PUMP_ON")) {
-              setPumpOn();
             }
 
             // Handle STATE messages
@@ -478,21 +574,36 @@
         return;
       }
       
-      // Stop any running timer when manual water is pressed
       resetCountdown();
-      
-      try {
-        const encoder = new TextEncoder();
-        await writer.write(encoder.encode("SERVO_ON\n"));
-        log("Manual watering triggered");
-        setPumpOn();
-      } catch (e) {
-        log("Failed to send manual water command: " + e.message);
-        alert("Failed to send command. Check connection.");
+      await activateServo();
+    });
+
+    /* Timer Modal */
+    timerBox.addEventListener("click", () => {
+      if (timerRunning) {
+        log("Cannot edit timer while running");
+        return;
+      }
+      timerModal.classList.add("show");
+    });
+
+    cancelTimerBtn.addEventListener("click", () => {
+      timerModal.classList.remove("show");
+    });
+
+    saveTimerBtn.addEventListener("click", () => {
+      const newMinutes = parseInt(timerInput.value);
+      if (newMinutes >= 1 && newMinutes <= 60) {
+        timerMinutes = newMinutes;
+        localStorage.setItem("timerMinutes", timerMinutes);
+        log(`Timer set to ${timerMinutes} minutes`);
+        timerModal.classList.remove("show");
+      } else {
+        alert("Please enter a value between 1 and 60 minutes");
       }
     });
 
-    log("Dashboard ready. Click 'Connect to Arduino' to begin.");
+    log(`Dashboard ready. Timer set to ${timerMinutes} minutes. Click 'Connect to Arduino' to begin.`);
   </script>
 </body>
 </html>
