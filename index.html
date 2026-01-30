@@ -189,6 +189,7 @@
       <div class="row">
         <button id="connect">Connect to Arduino</button>
         <button id="toggle-audio">Enable Audio</button>
+        <button id="manual-water">💧 Water Now</button>
       </div>
       
       <div style="margin-top: 1.5rem;">
@@ -270,6 +271,7 @@
     const timerBox = document.getElementById("timerBox");
     const audioBtn = document.getElementById("toggle-audio");
     const connectBtn = document.getElementById("connect");
+    const manualWaterBtn = document.getElementById("manual-water");
 
     let timerInterval = null;
     let remainingMs = 0;
@@ -305,14 +307,18 @@
           timerRunning = false;
           updateTimerDisplay();
           
-          log("Timer expired! Sending PUMP_ON command");
+          log("Timer expired! Sending SERVO_ON command");
           if (writer) {
             try {
-              await writer.write("PUMP_ON\n");
-              log("PUMP_ON command sent");
+              const encoder = new TextEncoder();
+              await writer.write(encoder.encode("SERVO_ON\n"));
+              log("SERVO_ON command sent successfully");
+              setPumpOn();
             } catch (e) {
-              log("Failed to send PUMP_ON: " + e.message);
+              log("Failed to send SERVO_ON: " + e.message);
             }
+          } else {
+            log("Error: Serial writer not available");
           }
         } else {
           updateTimerDisplay();
@@ -354,7 +360,7 @@
     }
 
     function setPumpOn() {
-      statusDiv.textContent = "Pump Activated 💧";
+      statusDiv.textContent = "Pump Activated 💧 (3.5s)";
       statusDiv.className = "status pump";
       track.textContent = "Watering in progress...";
       log("State: PUMP_ON");
@@ -419,7 +425,7 @@
               setWet();
             } else if (line.includes("DRY")) {
               setDry();
-            } else if (line.includes("PUMP_ON")) {
+            } else if (line.includes("SERVO_ON") || line.includes("PUMP_ON")) {
               setPumpOn();
             }
 
@@ -461,6 +467,25 @@
         audioBtn.style.borderColor = "#14b8a6";
         track.textContent = "None";
         log("Audio disabled");
+      }
+    });
+
+    /* Manual Water Button */
+    manualWaterBtn.addEventListener("click", async () => {
+      if (!writer) {
+        alert("Please connect to Arduino first!");
+        log("Manual water failed: Not connected");
+        return;
+      }
+      
+      try {
+        const encoder = new TextEncoder();
+        await writer.write(encoder.encode("SERVO_ON\n"));
+        log("Manual watering triggered");
+        setPumpOn();
+      } catch (e) {
+        log("Failed to send manual water command: " + e.message);
+        alert("Failed to send command. Check connection.");
       }
     });
 
