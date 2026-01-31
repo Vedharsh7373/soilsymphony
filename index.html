@@ -518,6 +518,25 @@
             
             log("RX: " + line);
 
+            // Handle Arduino feedback
+            if (line === "TRIGGERED") {
+              setPumpOn();
+              log("Pump activated by Arduino");
+            } else if (line === "DONE") {
+              log("Pump cycle complete - checking plant status");
+              // After pump done, revert to actual plant status
+              setTimeout(() => {
+                if (currentMood === "wet") {
+                  setWet();
+                } else if (currentMood === "dry") {
+                  setDry();
+                } else {
+                  statusDiv.textContent = "Waiting for sensor update...";
+                  statusDiv.className = "status";
+                }
+              }, 500);
+            }
+
             // Parse incoming messages
             if (line.includes("WET") || line.includes("MOIST")) {
               setWet();
