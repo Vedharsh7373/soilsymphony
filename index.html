@@ -1,165 +1,167 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>SoilSymphony: Evolution Dashboard</title>
-    <style>
-        :root {
-            --bg: #05070a; --card: #101425;
-            --hp-color: #ff4757; --xp-color: #2ed573;
-            --accent-blue: #3b82f6;
-        }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; text-align: center; padding: 20px; }
-        .game-container { max-width: 700px; margin: 0 auto; background: var(--card); padding: 30px; border-radius: 30px; border: 4px solid #1e293b; box-shadow: 0 0 50px rgba(0,0,0,0.8); }
-        
-        /* Progress Bars */
-        .bar-label { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 5px; text-transform: uppercase; color: #94a3b8; }
-        .bar { width: 100%; height: 15px; background: #000; border-radius: 10px; margin-bottom: 15px; overflow: hidden; border: 1px solid #334155; }
-        .fill { height: 100%; transition: width 0.4s ease; }
-        
-        /* Plant Visuals */
-        #stage-display { font-size: 100px; margin: 20px 0; transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-        .dead { filter: grayscale(1) opacity(0.5); transform: rotate(90deg); }
-
-        .btn-connect { background: var(--accent-blue); color: white; border: none; padding: 15px 30px; border-radius: 50px; cursor: pointer; font-weight: bold; font-size: 1rem; }
-        .log-box { background: #000; padding: 10px; height: 80px; overflow-y: auto; font-family: monospace; font-size: 11px; margin-top: 20px; border-radius: 10px; color: #55ff55; text-align: left; }
-    </style>
+  <meta charset="UTF-8" />
+  <title>SoilSymphony – Evolution & Harmony</title>
+  <style>
+    :root {
+      --bg-dark: #0a0e1a; --bg-card: #12172b; --bg-elevated: #1a2035;
+      --accent-green: #22c55e; --accent-blue: #3b82f6; --accent-red: #ef4444;
+      --text-primary: #f1f5f9; --text-secondary: #94a3b8; --border: #1e293b;
+    }
+    body { font-family: 'Segoe UI', sans-serif; background: var(--bg-dark); color: var(--text-primary); padding: 20px; }
+    .container { max-width: 900px; margin: 0 auto; }
+    
+    /* GAME STYLES */
+    .game-panel {
+      background: radial-gradient(circle at center, #1a2a4a 0%, var(--bg-card) 100%);
+      border: 2px solid var(--accent-blue); border-radius: 20px;
+      padding: 30px; text-align: center; margin-bottom: 20px;
+    }
+    #plant-avatar { font-size: 100px; margin: 10px 0; display: inline-block; transition: all 0.5s; }
+    .bar { width: 100%; height: 12px; background: #000; border-radius: 6px; margin: 10px 0; overflow: hidden; }
+    .fill { height: 100%; width: 0%; transition: width 0.4s; }
+    
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 20px; }
+    .btn { padding: 12px; border-radius: 8px; border: none; cursor: pointer; font-weight: bold; width: 100%; background: var(--accent-blue); color: white; }
+    .log { background: #000; color: #55ff55; font-family: monospace; font-size: 11px; height: 100px; overflow-y: auto; padding: 10px; border-radius: 10px; margin-top: 20px; }
+  </style>
 </head>
 <body>
 
-<div class="game-container">
-    <h1 style="color: var(--xp-color); letter-spacing: 3px;">🌱 SOIL SYMPHONY</h1>
-    <p id="level-tag" style="color: #94a3b8;">LEVEL 1: SPROUT</p>
-
-    <div id="stage-display">🌱</div>
-
-    <div class="bar-label"><span>Plant Health</span><span id="hp-val">100%</span></div>
-    <div class="bar"><div id="hp-fill" class="fill" style="width: 100%; background: var(--hp-color);"></div></div>
-
-    <div class="bar-label"><span>Growth XP</span><span id="xp-val">0%</span></div>
-    <div class="bar"><div id="xp-fill" class="fill" style="width: 0%; background: var(--xp-color);"></div></div>
-
-    <p id="msg" style="font-style: italic; margin-bottom: 20px;">Link sensor to begin music & growth...</p>
+<div class="container">
+  <div class="game-panel">
+    <div style="font-weight: bold; color: var(--accent-blue);">PLANT LEVEL: <span id="lvl">1</span></div>
+    <div id="plant-avatar">🌱</div>
+    <h2 id="mood">Connect Arduino to Begin</h2>
     
-    <div id="sensor-data" style="margin-bottom: 20px; display: none;">
-        <span style="font-size: 24px; font-weight: bold;" id="raw-val">---</span>
-        <div style="font-size: 12px; opacity: 0.6;">CURRENT SOIL READING</div>
+    <div style="display:flex; justify-content:space-between; font-size:12px;"><span>HEALTH (HP)</span><span id="hp-txt">100%</span></div>
+    <div class="bar"><div id="hp-fill" class="fill" style="background: var(--accent-red); width: 100%;"></div></div>
+    
+    <div style="display:flex; justify-content:space-between; font-size:12px;"><span>GROWTH (XP)</span><span id="xp-txt">0%</span></div>
+    <div class="bar"><div id="xp-fill" class="fill" style="background: var(--accent-green); width: 0%;"></div></div>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <h3>🔌 Serial Connection</h3>
+      <button class="btn" id="connectBtn">Connect Arduino</button>
+      <div id="status" style="margin-top:10px; font-size:12px; color:var(--text-secondary);">Status: Disconnected</div>
     </div>
+    <div class="card">
+      <h3>💧 Soil Sensor</h3>
+      <div id="soil-val" style="font-size: 32px; font-weight: bold;">---</div>
+      <div id="state-txt" style="color: var(--accent-blue);">Waiting for data...</div>
+    </div>
+  </div>
 
-    <button class="btn-connect" id="connectBtn">CONNECT ARDUINO</button>
-    
-    <div class="log-box" id="log">System initialized...</div>
+  <div class="log" id="sys-log">Welcome to SoilSymphony. Timer and Music systems active...</div>
 </div>
 
 <script>
-    let wetMusic = null, dryAlert = null;
-    let hp = 100, xp = 0, level = 1, isDead = false;
-    let reader = null, currentlyPlaying = null;
+  let port, reader, hp = 100, xp = 0, level = 1, isDead = false;
+  let wetMusic, dryAlert, currentlyPlaying = null;
 
-    const MUSIC_URLS = {
-        wet: 'https://raw.githubusercontent.com/Vedharsh7373/soilsymphony/main/432%20Hz%20-%20Positive%20Energy%20Meditation%20Music%20Deep%20Healing%20Music%20for%20The%20Body%20and%20Soul.mp3',
-        dry: 'https://raw.githubusercontent.com/Vedharsh7373/soilsymphony/main/Record%20(online-voice-recorder.com).mp3'
-    };
+  const URLS = {
+    wet: 'https://raw.githubusercontent.com/Vedharsh7373/soilsymphony/main/432%20Hz%20-%20Positive%20Energy%20Meditation%20Music%20Deep%20Healing%20Music%20for%20The%20Body%20and%20Soul.mp3',
+    dry: 'https://raw.githubusercontent.com/Vedharsh7373/soilsymphony/main/Record%20(online-voice-recorder.com).mp3'
+  };
 
-    function initAudio() {
-        if (!wetMusic) {
-            wetMusic = new Audio(MUSIC_URLS.wet); wetMusic.loop = true;
-            dryAlert = new Audio(MUSIC_URLS.dry); dryAlert.loop = true;
-        }
+  function initAudio() {
+    if (!wetMusic) {
+      wetMusic = new Audio(URLS.wet); wetMusic.loop = true;
+      dryAlert = new Audio(URLS.dry); dryAlert.loop = true;
     }
+  }
 
-    function processGameLogic(state) {
-        if (isDead) return;
-        const stage = document.getElementById('stage-display');
-        const msg = document.getElementById('msg');
+  function handleIncomingData(line) {
+    if (isDead) return;
+    const logEl = document.getElementById('sys-log');
+    logEl.innerHTML = `[${new Date().toLocaleTimeString()}] ${line}<br>${logEl.innerHTML}`;
 
-        if (state === 'DRY') {
-            hp -= 3;
-            msg.textContent = "ALARM! I'm thirsty!";
-            playAudio('dry');
-            stage.style.transform = "scale(0.85) rotate(5deg)";
-        } else if (state === 'WET') {
-            if (hp < 100) hp += 1;
-            msg.textContent = "Soothing... 432Hz Healing Active.";
-            playAudio('wet');
-            stage.style.transform = "scale(1.1) rotate(-5deg)";
-        } else {
-            xp += 5;
-            msg.textContent = "Vibe is perfect. I am growing.";
-            stopAudio();
-            stage.style.transform = "scale(1) rotate(0deg)";
-        }
+    if (line.includes("Soil:")) {
+      const val = parseInt(line.match(/\d+/)[0]);
+      document.getElementById('soil-val').textContent = val;
+      const avatar = document.getElementById('plant-avatar');
+      const mood = document.getElementById('mood');
 
-        if (hp <= 0) { isDead = true; stage.classList.add('dead'); msg.textContent = "GAME OVER: Plant Withered."; stopAudio(); }
-        if (xp >= 100) { level++; xp = 0; evolvePlant(); }
-        updateUI();
-    }
+      if (line.includes("STATE:WET")) {
+        hp = Math.min(100, hp + 2); // 432Hz heals
+        mood.textContent = "Soothing... (Healing)";
+        avatar.style.transform = "scale(1.1)";
+        playMusic('wet');
+      } else if (line.includes("STATE:DRY")) {
+        hp -= 4; // Dryness hurts
+        mood.textContent = "THIRSTY! (Losing Health)";
+        avatar.style.transform = "scale(0.8) rotate(10deg)";
+        playMusic('dry');
+      } else {
+        xp += 5; // Normal moisture gives XP
+        mood.textContent = "Perfect Vibe (Growing)";
+        avatar.style.transform = "scale(1)";
+        stopMusic();
+      }
 
-    function evolvePlant() {
+      if (hp <= 0) {
+        isDead = true;
+        avatar.textContent = "💀";
+        mood.textContent = "GAME OVER";
+        stopMusic();
+      }
+      if (xp >= 100) {
+        level++; xp = 0;
+        document.getElementById('lvl').textContent = level;
         const icons = ["🌱", "🌿", "🪴", "🍀", "🌸", "🌻", "🌳", "🌟"];
-        document.getElementById('stage-display').textContent = icons[Math.min(level-1, 7)];
-        document.getElementById('level-tag').textContent = `LEVEL ${level}: ${level > 5 ? 'ANCIENT' : 'GROWING'}`;
-        log("Evolved to Level " + level + "!");
+        avatar.textContent = icons[Math.min(level-1, 7)];
+      }
+      updateUI();
     }
+  }
 
-    function playAudio(type) {
-        if (currentlyPlaying === type) return;
-        stopAudio();
-        if (type === 'wet') wetMusic.play(); else dryAlert.play();
-        currentlyPlaying = type;
+  function updateUI() {
+    document.getElementById('hp-fill').style.width = hp + "%";
+    document.getElementById('hp-txt').textContent = hp + "%";
+    document.getElementById('xp-fill').style.width = xp + "%";
+    document.getElementById('xp-txt').textContent = xp + "%";
+  }
+
+  function playMusic(type) {
+    if (currentlyPlaying === type) return;
+    stopMusic();
+    if (type === 'wet') wetMusic.play(); else dryAlert.play();
+    currentlyPlaying = type;
+  }
+
+  function stopMusic() {
+    if (wetMusic) wetMusic.pause(); if (dryAlert) dryAlert.pause();
+    currentlyPlaying = null;
+  }
+
+  async function connect() {
+    initAudio();
+    port = await navigator.serial.requestPort();
+    await port.open({ baudRate: 115200 });
+    document.getElementById('status').textContent = "Status: Connected";
+    const decoder = new TextDecoderStream();
+    port.readable.pipeTo(decoder.writable);
+    reader = decoder.readable.getReader();
+    readLoop();
+  }
+
+  async function readLoop() {
+    let buffer = "";
+    while (true) {
+      const { value, done } = await reader.read();
+      buffer += value;
+      let lines = buffer.split("\n");
+      buffer = lines.pop();
+      for (let l of lines) handleIncomingData(l.trim());
     }
+  }
 
-    function stopAudio() {
-        if (wetMusic) wetMusic.pause(); if (dryAlert) dryAlert.pause();
-        currentlyPlaying = null;
-    }
-
-    function updateUI() {
-        document.getElementById('hp-fill').style.width = hp + "%";
-        document.getElementById('hp-val').textContent = hp + "%";
-        document.getElementById('xp-fill').style.width = xp + "%";
-        document.getElementById('xp-val').textContent = xp + "%";
-    }
-
-    function log(m) {
-        const l = document.getElementById('log');
-        l.innerHTML = `[${new Date().toLocaleTimeString()}] ${m}<br>${l.innerHTML}`;
-    }
-
-    async function connect() {
-        initAudio();
-        try {
-            const port = await navigator.serial.requestPort();
-            await port.open({ baudRate: 115200 });
-            document.getElementById('connectBtn').style.display = 'none';
-            document.getElementById('sensor-data').style.display = 'block';
-            
-            const textDecoder = new TextDecoderStream();
-            port.readable.pipeTo(textDecoder.writable);
-            reader = textDecoder.readable.getReader();
-            readLoop();
-        } catch (e) { log("Error: " + e.message); }
-    }
-
-    async function readLoop() {
-        let buffer = '';
-        while (true) {
-            const { value, done } = await reader.read();
-            buffer += value;
-            let lines = buffer.split('\n');
-            buffer = lines.pop();
-            for (let line of lines) {
-                if (line.includes('Soil:')) {
-                    const val = parseInt(line.match(/\d+/)[0]);
-                    document.getElementById('raw-val').textContent = val;
-                    let state = line.includes('WET') ? 'WET' : (line.includes('DRY') ? 'DRY' : 'NORMAL');
-                    processGameLogic(state);
-                }
-            }
-        }
-    }
-
-    document.getElementById('connectBtn').addEventListener('click', connect);
+  document.getElementById('connectBtn').addEventListener('click', connect);
+  document.addEventListener('click', initAudio, { once: true });
 </script>
 </body>
 </html>
