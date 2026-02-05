@@ -2,166 +2,1158 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>SoilSymphony – Evolution & Harmony</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SoilSymphony – Smart Watering System</title>
   <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
     :root {
-      --bg-dark: #0a0e1a; --bg-card: #12172b; --bg-elevated: #1a2035;
-      --accent-green: #22c55e; --accent-blue: #3b82f6; --accent-red: #ef4444;
-      --text-primary: #f1f5f9; --text-secondary: #94a3b8; --border: #1e293b;
+      --bg-dark: #0a0e1a;
+      --bg-card: #12172b;
+      --bg-elevated: #1a2035;
+      --accent-green: #22c55e;
+      --accent-blue: #3b82f6;
+      --accent-yellow: #fbbf24;
+      --accent-red: #ef4444;
+      --text-primary: #f1f5f9;
+      --text-secondary: #94a3b8;
+      --border: #1e293b;
+      --shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
     }
-    body { font-family: 'Segoe UI', sans-serif; background: var(--bg-dark); color: var(--text-primary); padding: 20px; }
-    .container { max-width: 900px; margin: 0 auto; }
-    
-    /* GAME STYLES */
-    .game-panel {
-      background: radial-gradient(circle at center, #1a2a4a 0%, var(--bg-card) 100%);
-      border: 2px solid var(--accent-blue); border-radius: 20px;
-      padding: 30px; text-align: center; margin-bottom: 20px;
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 
+        'Helvetica Neue', Arial, sans-serif;
+      background: linear-gradient(135deg, var(--bg-dark) 0%, #050810 100%);
+      color: var(--text-primary);
+      min-height: 100vh;
+      padding: 2rem 1rem;
     }
-    #plant-avatar { font-size: 100px; margin: 10px 0; display: inline-block; transition: all 0.5s; }
-    .bar { width: 100%; height: 12px; background: #000; border-radius: 6px; margin: 10px 0; overflow: hidden; }
-    .fill { height: 100%; width: 0%; transition: width 0.4s; }
-    
-    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-    .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 20px; }
-    .btn { padding: 12px; border-radius: 8px; border: none; cursor: pointer; font-weight: bold; width: 100%; background: var(--accent-blue); color: white; }
-    .log { background: #000; color: #55ff55; font-family: monospace; font-size: 11px; height: 100px; overflow-y: auto; padding: 10px; border-radius: 10px; margin-top: 20px; }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+
+    .header h1 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--accent-green), var(--accent-blue));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 0.5rem;
+    }
+
+    .header p {
+      color: var(--text-secondary);
+      font-size: 1.1rem;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.5rem;
+      box-shadow: var(--shadow);
+    }
+
+    .card-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      border-radius: 999px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent-red);
+      animation: pulse 2s infinite;
+    }
+
+    .status-dot.connected {
+      background: var(--accent-green);
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .metric-group {
+      display: grid;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .metric {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1rem;
+    }
+
+    .metric-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-secondary);
+      margin-bottom: 0.5rem;
+    }
+
+    .metric-value {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .metric-subtitle {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin-top: 0.25rem;
+    }
+
+    .progress-bar {
+      height: 12px;
+      background: var(--bg-elevated);
+      border-radius: 999px;
+      overflow: hidden;
+      margin-top: 1rem;
+      border: 1px solid var(--border);
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--accent-green), var(--accent-yellow), var(--accent-red));
+      transition: width 0.5s ease;
+    }
+
+    .progress-labels {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 0.5rem;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    .btn-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-top: 1.5rem;
+    }
+
+    .btn {
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent-green), #16a34a);
+      color: white;
+      box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(34, 197, 94, 0.4);
+    }
+
+    .btn-secondary {
+      background: var(--bg-elevated);
+      color: var(--text-primary);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover:not(:disabled) {
+      background: #242d45;
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .log-container {
+      background: var(--bg-elevated);
+      border: 1px dashed var(--border);
+      border-radius: 12px;
+      padding: 1rem;
+      max-height: 400px;
+      overflow-y: auto;
+      font-family: 'Courier New', monospace;
+      font-size: 0.875rem;
+      margin-top: 1rem;
+    }
+
+    .log-entry {
+      padding: 0.25rem 0;
+      color: var(--text-secondary);
+    }
+
+    .log-entry.in {
+      color: var(--accent-blue);
+    }
+
+    .log-entry.out {
+      color: var(--accent-green);
+    }
+
+    .log-entry.error {
+      color: var(--accent-red);
+    }
+
+    .alert {
+      padding: 1rem;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+      border-left: 4px solid;
+    }
+
+    .alert-info {
+      background: rgba(59, 130, 246, 0.1);
+      border-color: var(--accent-blue);
+      color: var(--accent-blue);
+    }
+
+    .divider {
+      height: 1px;
+      background: var(--border);
+      margin: 1.5rem 0;
+    }
+
+    /* Game Styles */
+    #gameCanvas {
+      width: 100%;
+      height: 200px;
+      background: var(--bg-elevated);
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      display: block;
+      cursor: pointer;
+    }
+
+    .game-stats {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 0.5rem;
+      font-size: 0.875rem;
+    }
+
+    .game-stat {
+      background: var(--bg-elevated);
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+
+    .game-stat-label {
+      color: var(--text-secondary);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .game-stat-value {
+      color: var(--text-primary);
+      font-weight: 600;
+      font-size: 1.25rem;
+      margin-top: 0.25rem;
+    }
+
+    @media (max-width: 768px) {
+      .header h1 {
+        font-size: 2rem;
+      }
+      
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
   </style>
 </head>
 <body>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <h1>🌱 SoilSymphony</h1>
+      <p>Smart Arduino-Powered Plant Watering System</p>
+    </div>
 
-<div class="container">
-  <div class="game-panel">
-    <div style="font-weight: bold; color: var(--accent-blue);">PLANT LEVEL: <span id="lvl">1</span></div>
-    <div id="plant-avatar">🌱</div>
-    <h2 id="mood">Connect Arduino to Begin</h2>
-    
-    <div style="display:flex; justify-content:space-between; font-size:12px;"><span>HEALTH (HP)</span><span id="hp-txt">100%</span></div>
-    <div class="bar"><div id="hp-fill" class="fill" style="background: var(--accent-red); width: 100%;"></div></div>
-    
-    <div style="display:flex; justify-content:space-between; font-size:12px;"><span>GROWTH (XP)</span><span id="xp-txt">0%</span></div>
-    <div class="bar"><div id="xp-fill" class="fill" style="background: var(--accent-green); width: 0%;"></div></div>
+    <!-- Connection Alert -->
+    <div class="alert alert-info" id="connectionAlert">
+      <strong>📌 Setup Required:</strong> Use Chrome or Edge browser. Click "Connect Arduino" and select your serial port.
+    </div>
+
+    <!-- Music Control Panel -->
+    <div style="text-align: center; margin-bottom: 1.5rem;">
+      <div style="display: inline-flex; gap: 1rem; align-items: center; background: var(--bg-card); padding: 1rem 1.5rem; border-radius: 12px; border: 1px solid var(--border);">
+        <button class="btn btn-secondary" id="muteBtn" style="padding: 0.5rem 1.5rem;">
+          🔊 Sound: ON
+        </button>
+        <div id="musicStatus" style="color: var(--text-secondary); font-size: 0.875rem; min-width: 300px;">
+          <div>⏸️ No music playing</div>
+          <div style="font-size: 0.75rem; opacity: 0.7; margin-top: 0.25rem;">
+            Music plays automatically based on soil moisture
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Music Legend -->
+    <div style="text-align: center; margin-bottom: 1.5rem; color: var(--text-secondary); font-size: 0.875rem;">
+      <div style="display: inline-flex; gap: 2rem; background: var(--bg-elevated); padding: 0.75rem 1.5rem; border-radius: 8px; border: 1px solid var(--border);">
+        <div><span style="color: var(--accent-green);">💧 WET</span> → 432 Hz Meditation Music</div>
+        <div><span style="color: var(--accent-red);">🔥 DRY</span> → Alert Recording</div>
+        <div><span style="color: var(--accent-yellow);">✓ NORMAL</span> → No Music</div>
+      </div>
+    </div>
+
+    <!-- Main Grid -->
+    <div class="grid">
+      <!-- Connection Card -->
+      <div class="card">
+        <div class="card-title">
+          🔌 Connection
+          <div style="margin-left: auto;">
+            <span class="status-badge">
+              <span class="status-dot" id="connectionDot"></span>
+              <span id="connectionStatus">Disconnected</span>
+            </span>
+          </div>
+        </div>
+        
+        <div class="metric-group">
+          <div class="metric">
+            <div class="metric-label">Serial Port</div>
+            <div class="metric-value" id="portName">Not Connected</div>
+            <div class="metric-subtitle">Baud Rate: 115200</div>
+          </div>
+        </div>
+
+        <div class="btn-group">
+          <button class="btn btn-primary" id="connectBtn">
+            🔌 Connect Arduino
+          </button>
+          <button class="btn btn-secondary" id="refreshBtn" disabled>
+            🔄 Refresh Status
+          </button>
+        </div>
+      </div>
+
+      <!-- Soil Moisture Card -->
+      <div class="card">
+        <div class="card-title">💧 Soil Moisture</div>
+        
+        <div class="metric">
+          <div class="metric-label">Current Reading</div>
+          <div class="metric-value" id="soilValue">---</div>
+          <div class="metric-subtitle" id="soilState">Waiting for data...</div>
+        </div>
+
+        <div class="progress-bar">
+          <div class="progress-fill" id="soilProgress"></div>
+        </div>
+        <div class="progress-labels">
+          <span>Wet (0)</span>
+          <span>Normal (512)</span>
+          <span>Dry (1023)</span>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="metric-label">Thresholds</div>
+        <div class="metric-subtitle">
+          Wet: &lt; 400 | Normal: 400-700 | Dry: &gt; 700
+        </div>
+      </div>
+
+      <!-- Auto-Watering Timer Card -->
+      <div class="card">
+        <div class="card-title">⏰ Auto-Watering Timer</div>
+        
+        <div class="metric">
+          <div class="metric-label">Next Watering In</div>
+          <div class="metric-value" id="timerDisplay">--:--</div>
+          <div class="metric-subtitle" id="timerStatus">Timer inactive</div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="metric-label">Watering Interval</div>
+        <select id="intervalSelect" class="btn btn-secondary" style="width: 100%; margin-top: 0.5rem; padding: 0.75rem;">
+          <option value="0.5">Every 30 minutes (Testing)</option>
+          <option value="1">Every 1 hour</option>
+          <option value="2">Every 2 hours</option>
+          <option value="6">Every 6 hours</option>
+          <option value="12">Every 12 hours</option>
+          <option value="24" selected>Every 24 hours (Default)</option>
+          <option value="48">Every 48 hours</option>
+          <option value="72">Every 3 days</option>
+          <option value="168">Every 7 days (Weekly)</option>
+        </select>
+
+        <div class="btn-group">
+          <button class="btn btn-primary" id="startTimerBtn" disabled>
+            ▶️ Start Timer
+          </button>
+          <button class="btn btn-secondary" id="stopTimerBtn" disabled>
+            ⏸️ Stop Timer
+          </button>
+          <button class="btn btn-secondary" id="calibrateBtn" disabled>
+            📊 Calibrate
+          </button>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="metric-subtitle" id="intervalInfo">
+          Current interval: 24 hours
+        </div>
+      </div>
+    </div>
+
+    <!-- Plant Jump Game Card -->
+    <div class="card">
+      <div class="card-title">
+        🎮 Plant Jump Game
+        <div style="margin-left: auto; font-size: 0.875rem; color: var(--text-secondary);">
+          Press SPACE or Click to Jump
+        </div>
+      </div>
+      
+      <canvas id="gameCanvas"></canvas>
+      
+      <div class="game-stats">
+        <div class="game-stat">
+          <div class="game-stat-label">Score</div>
+          <div class="game-stat-value" id="gameScore">0</div>
+        </div>
+        <div class="game-stat">
+          <div class="game-stat-label">High Score</div>
+          <div class="game-stat-value" id="gameHighScore">0</div>
+        </div>
+        <div class="game-stat">
+          <div class="game-stat-label">Status</div>
+          <div class="game-stat-value" id="gameStatus" style="font-size: 1rem;">Ready</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Log Card -->
+    <div class="card">
+      <div class="card-title">
+        📋 System Log
+        <button class="btn btn-secondary" id="clearLogBtn" style="margin-left: auto; padding: 0.5rem 1rem;">
+          🗑️ Clear
+        </button>
+      </div>
+      <div class="log-container" id="logContainer"></div>
+    </div>
   </div>
 
-  <div class="grid">
-    <div class="card">
-      <h3>🔌 Serial Connection</h3>
-      <button class="btn" id="connectBtn">Connect Arduino</button>
-      <div id="status" style="margin-top:10px; font-size:12px; color:var(--text-secondary);">Status: Disconnected</div>
-    </div>
-    <div class="card">
-      <h3>💧 Soil Sensor</h3>
-      <div id="soil-val" style="font-size: 32px; font-weight: bold;">---</div>
-      <div id="state-txt" style="color: var(--accent-blue);">Waiting for data...</div>
-    </div>
-  </div>
+  <script>
+    // ==================== Audio System ====================
+    
+    let wetMusic = null;
+    let dryAlert = null;
+    let isMuted = false;
+    let currentlyPlaying = null;
 
-  <div class="log" id="sys-log">Welcome to SoilSymphony. Timer and Music systems active...</div>
-</div>
+    const MUSIC_URLS = {
+      wet: 'https://raw.githubusercontent.com/Vedharsh7373/soilsymphony/main/432%20Hz%20-%20Positive%20Energy%20Meditation%20Music%20Deep%20Healing%20Music%20for%20The%20Body%20and%20Soul.mp3',
+      dry: 'https://raw.githubusercontent.com/Vedharsh7373/soilsymphony/main/Record%20(online-voice-recorder.com).mp3'
+    };
 
-<script>
-  let port, reader, hp = 100, xp = 0, level = 1, isDead = false;
-  let wetMusic, dryAlert, currentlyPlaying = null;
-
-  const URLS = {
-    wet: 'https://raw.githubusercontent.com/Vedharsh7373/soilsymphony/main/432%20Hz%20-%20Positive%20Energy%20Meditation%20Music%20Deep%20Healing%20Music%20for%20The%20Body%20and%20Soul.mp3',
-    dry: 'https://raw.githubusercontent.com/Vedharsh7373/soilsymphony/main/Record%20(online-voice-recorder.com).mp3'
-  };
-
-  function initAudio() {
-    if (!wetMusic) {
-      wetMusic = new Audio(URLS.wet); wetMusic.loop = true;
-      dryAlert = new Audio(URLS.dry); dryAlert.loop = true;
+    function initAudio() {
+      if (!wetMusic) {
+        wetMusic = new Audio(MUSIC_URLS.wet);
+        wetMusic.loop = true;
+        wetMusic.volume = 0.4;
+        wetMusic.addEventListener('error', (e) => {
+          log('432 Hz music failed to load', 'error');
+        });
+      }
+      
+      if (!dryAlert) {
+        dryAlert = new Audio(MUSIC_URLS.dry);
+        dryAlert.loop = true;
+        dryAlert.volume = 0.9;
+        dryAlert.addEventListener('error', (e) => {
+          log('Dry alert sound failed to load', 'error');
+        });
+      }
     }
-  }
 
-  function handleIncomingData(line) {
-    if (isDead) return;
-    const logEl = document.getElementById('sys-log');
-    logEl.innerHTML = `[${new Date().toLocaleTimeString()}] ${line}<br>${logEl.innerHTML}`;
+    function playWetMusic() {
+      if (isMuted || currentlyPlaying === 'wet') return;
+      stopAllMusic();
+      if (wetMusic) {
+        wetMusic.currentTime = 0;
+        wetMusic.play().then(() => {
+          currentlyPlaying = 'wet';
+          log('🎵 Playing 432 Hz meditation music', 'info');
+          updateMusicStatus();
+        }).catch(() => {});
+      }
+    }
 
-    if (line.includes("Soil:")) {
-      const val = parseInt(line.match(/\d+/)[0]);
-      document.getElementById('soil-val').textContent = val;
-      const avatar = document.getElementById('plant-avatar');
-      const mood = document.getElementById('mood');
+    function playDryMusic() {
+      if (isMuted || currentlyPlaying === 'dry') return;
+      stopAllMusic();
+      if (dryAlert) {
+        dryAlert.currentTime = 0;
+        dryAlert.play().then(() => {
+          currentlyPlaying = 'dry';
+          log('🔔 Playing dry alert recording', 'info');
+          updateMusicStatus();
+        }).catch(() => {});
+      }
+    }
 
-      if (line.includes("STATE:WET")) {
-        hp = Math.min(100, hp + 2); // 432Hz heals
-        mood.textContent = "Soothing... (Healing)";
-        avatar.style.transform = "scale(1.1)";
-        playMusic('wet');
-      } else if (line.includes("STATE:DRY")) {
-        hp -= 4; // Dryness hurts
-        mood.textContent = "THIRSTY! (Losing Health)";
-        avatar.style.transform = "scale(0.8) rotate(10deg)";
-        playMusic('dry');
+    function stopAllMusic() {
+      if (wetMusic) {
+        wetMusic.pause();
+        wetMusic.currentTime = 0;
+      }
+      if (dryAlert) {
+        dryAlert.pause();
+        dryAlert.currentTime = 0;
+      }
+      currentlyPlaying = null;
+      updateMusicStatus();
+    }
+
+    function toggleMute() {
+      isMuted = !isMuted;
+      if (isMuted) stopAllMusic();
+      updateMuteButton();
+    }
+
+    function updateMuteButton() {
+      const muteBtn = document.getElementById('muteBtn');
+      if (muteBtn) {
+        muteBtn.textContent = isMuted ? '🔇 Sound: OFF' : '🔊 Sound: ON';
+      }
+    }
+
+    function updateMusicStatus() {
+      const statusDiv = document.getElementById('musicStatus');
+      if (!statusDiv) return;
+      
+      if (isMuted) {
+        statusDiv.innerHTML = '<div style="color: var(--text-secondary);">🔇 Audio muted</div>';
+      } else if (currentlyPlaying === 'wet') {
+        statusDiv.innerHTML = '<div style="color: var(--accent-green); font-weight: 600;">🎵 NOW PLAYING: 432 Hz Meditation Music</div>';
+      } else if (currentlyPlaying === 'dry') {
+        statusDiv.innerHTML = '<div style="color: var(--accent-red); font-weight: 600;">🔔 NOW PLAYING: Dry Alert Recording</div>';
       } else {
-        xp += 5; // Normal moisture gives XP
-        mood.textContent = "Perfect Vibe (Growing)";
-        avatar.style.transform = "scale(1)";
-        stopMusic();
+        statusDiv.innerHTML = '<div style="color: var(--text-secondary);">⏸️ No music playing</div>';
       }
-
-      if (hp <= 0) {
-        isDead = true;
-        avatar.textContent = "💀";
-        mood.textContent = "GAME OVER";
-        stopMusic();
-      }
-      if (xp >= 100) {
-        level++; xp = 0;
-        document.getElementById('lvl').textContent = level;
-        const icons = ["🌱", "🌿", "🪴", "🍀", "🌸", "🌻", "🌳", "🌟"];
-        avatar.textContent = icons[Math.min(level-1, 7)];
-      }
-      updateUI();
     }
-  }
 
-  function updateUI() {
-    document.getElementById('hp-fill').style.width = hp + "%";
-    document.getElementById('hp-txt').textContent = hp + "%";
-    document.getElementById('xp-fill').style.width = xp + "%";
-    document.getElementById('xp-txt').textContent = xp + "%";
-  }
+    // ==================== Watering Timer ====================
+    let wateringInterval = 24 * 60 * 60 * 1000; // Default 24 hours in milliseconds
+    let timerActive = false;
+    let nextWateringTime = null;
+    let timerIntervalId = null;
 
-  function playMusic(type) {
-    if (currentlyPlaying === type) return;
-    stopMusic();
-    if (type === 'wet') wetMusic.play(); else dryAlert.play();
-    currentlyPlaying = type;
-  }
-
-  function stopMusic() {
-    if (wetMusic) wetMusic.pause(); if (dryAlert) dryAlert.pause();
-    currentlyPlaying = null;
-  }
-
-  async function connect() {
-    initAudio();
-    port = await navigator.serial.requestPort();
-    await port.open({ baudRate: 115200 });
-    document.getElementById('status').textContent = "Status: Connected";
-    const decoder = new TextDecoderStream();
-    port.readable.pipeTo(decoder.writable);
-    reader = decoder.readable.getReader();
-    readLoop();
-  }
-
-  async function readLoop() {
-    let buffer = "";
-    while (true) {
-      const { value, done } = await reader.read();
-      buffer += value;
-      let lines = buffer.split("\n");
-      buffer = lines.pop();
-      for (let l of lines) handleIncomingData(l.trim());
+    // Load saved interval from local storage
+    function loadSavedInterval() {
+      const savedInterval = localStorage.getItem('wateringIntervalHours');
+      if (savedInterval) {
+        const hours = parseFloat(savedInterval);
+        wateringInterval = hours * 60 * 60 * 1000;
+        document.getElementById('intervalSelect').value = savedInterval;
+        updateIntervalInfo();
+        log(`✓ Loaded saved interval: ${hours} hours`, 'info');
+      }
     }
-  }
 
-  document.getElementById('connectBtn').addEventListener('click', connect);
-  document.addEventListener('click', initAudio, { once: true });
-</script>
+    // Update interval info display
+    function updateIntervalInfo() {
+      const hours = wateringInterval / (60 * 60 * 1000);
+      let displayText;
+      
+      if (hours < 1) {
+        const minutes = Math.round(hours * 60);
+        displayText = `Current interval: ${minutes} minutes`;
+      } else if (hours === 1) {
+        displayText = 'Current interval: 1 hour';
+      } else if (hours < 24) {
+        displayText = `Current interval: ${hours} hours`;
+      } else if (hours === 24) {
+        displayText = 'Current interval: 24 hours (1 day)';
+      } else if (hours === 48) {
+        displayText = 'Current interval: 48 hours (2 days)';
+      } else if (hours === 72) {
+        displayText = 'Current interval: 72 hours (3 days)';
+      } else if (hours === 168) {
+        displayText = 'Current interval: 168 hours (7 days)';
+      } else {
+        const days = Math.round(hours / 24);
+        displayText = `Current interval: ${hours} hours (${days} days)`;
+      }
+      
+      document.getElementById('intervalInfo').textContent = displayText;
+    }
+
+    // Handle interval selection change
+    function onIntervalChange(event) {
+      const hours = parseFloat(event.target.value);
+      wateringInterval = hours * 60 * 60 * 1000;
+      
+      // Save to local storage
+      localStorage.setItem('wateringIntervalHours', hours.toString());
+      
+      updateIntervalInfo();
+      log(`⏱️ Watering interval changed to ${hours} hours`, 'info');
+      
+      // If timer is active, restart it with new interval
+      if (timerActive) {
+        log('♻️ Restarting timer with new interval...', 'info');
+        stopWateringTimer();
+        setTimeout(() => startWateringTimer(), 100);
+      }
+    }
+
+    function startWateringTimer() {
+      if (!port) {
+        log('Connect Arduino first to start timer', 'error');
+        return;
+      }
+
+      timerActive = true;
+      nextWateringTime = Date.now() + wateringInterval;
+      
+      if (timerIntervalId) clearInterval(timerIntervalId);
+      
+      timerIntervalId = setInterval(updateTimerDisplay, 1000);
+      updateTimerDisplay();
+      
+      const hours = wateringInterval / (60 * 60 * 1000);
+      log(`⏰ Auto-watering timer started (${hours} hour interval)`, 'info');
+      document.getElementById('timerStatus').textContent = 'Timer active';
+      document.getElementById('startTimerBtn').disabled = true;
+      document.getElementById('stopTimerBtn').disabled = false;
+      document.getElementById('intervalSelect').disabled = true;
+    }
+
+    function stopWateringTimer() {
+      timerActive = false;
+      nextWateringTime = null;
+      
+      if (timerIntervalId) {
+        clearInterval(timerIntervalId);
+        timerIntervalId = null;
+      }
+      
+      document.getElementById('timerDisplay').textContent = '--:--:--';
+      document.getElementById('timerStatus').textContent = 'Timer stopped';
+      document.getElementById('startTimerBtn').disabled = false;
+      document.getElementById('stopTimerBtn').disabled = true;
+      document.getElementById('intervalSelect').disabled = false;
+      
+      log('⏸️ Auto-watering timer stopped', 'info');
+    }
+
+    function updateTimerDisplay() {
+      if (!timerActive || !nextWateringTime) return;
+      
+      const now = Date.now();
+      const timeLeft = nextWateringTime - now;
+      
+      if (timeLeft <= 0) {
+        // Time to water!
+        sendCommand('TRIGGER');
+        log('💧 Auto-watering triggered by timer', 'info');
+        
+        // Reset timer for next cycle
+        nextWateringTime = Date.now() + wateringInterval;
+      }
+      
+      const hours = Math.floor(timeLeft / (1000 * 60 * 60));
+      const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+      
+      document.getElementById('timerDisplay').textContent = 
+        `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    }
+
+    // ==================== Plant Jump Game ====================
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    // Set canvas size
+    function resizeCanvas() {
+      canvas.width = canvas.offsetWidth;
+      canvas.height = canvas.offsetHeight;
+    }
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    // Game variables
+    let gameRunning = false;
+    let score = 0;
+    let highScore = localStorage.getItem('plantGameHighScore') || 0;
+    let gameSpeed = 3;
+
+    // Player (plant)
+    const player = {
+      x: 50,
+      y: canvas.height - 60,
+      width: 30,
+      height: 40,
+      dy: 0,
+      jumpPower: -12,
+      gravity: 0.6,
+      jumping: false
+    };
+
+    // Obstacles
+    let obstacles = [];
+    let obstacleTimer = 0;
+
+    // Update high score display
+    document.getElementById('gameHighScore').textContent = highScore;
+
+    function jump() {
+      if (!player.jumping) {
+        player.dy = player.jumpPower;
+        player.jumping = true;
+      }
+    }
+
+    function resetGame() {
+      player.y = canvas.height - 60;
+      player.dy = 0;
+      player.jumping = false;
+      obstacles = [];
+      score = 0;
+      gameSpeed = 3;
+      obstacleTimer = 0;
+      document.getElementById('gameScore').textContent = '0';
+      document.getElementById('gameStatus').textContent = 'Playing';
+    }
+
+    function startGame() {
+      if (!gameRunning) {
+        resetGame();
+        gameRunning = true;
+        gameLoop();
+      }
+    }
+
+    function endGame() {
+      gameRunning = false;
+      document.getElementById('gameStatus').textContent = 'Game Over';
+      
+      if (score > highScore) {
+        highScore = score;
+        localStorage.setItem('plantGameHighScore', highScore);
+        document.getElementById('gameHighScore').textContent = highScore;
+        log(`🎉 New high score: ${highScore}!`, 'info');
+      }
+    }
+
+    function gameLoop() {
+      if (!gameRunning) return;
+
+      // Clear canvas
+      ctx.fillStyle = '#1a2035';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Update player physics
+      player.dy += player.gravity;
+      player.y += player.dy;
+
+      // Ground collision
+      if (player.y >= canvas.height - 60) {
+        player.y = canvas.height - 60;
+        player.dy = 0;
+        player.jumping = false;
+      }
+
+      // Draw ground
+      ctx.fillStyle = '#22c55e';
+      ctx.fillRect(0, canvas.height - 20, canvas.width, 20);
+
+      // Draw player (plant)
+      ctx.fillStyle = '#22c55e';
+      ctx.fillRect(player.x, player.y, player.width, player.height);
+      // Plant leaves
+      ctx.beginPath();
+      ctx.arc(player.x + 15, player.y, 10, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(player.x + 5, player.y + 10, 8, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(player.x + 25, player.y + 10, 8, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Spawn obstacles
+      obstacleTimer++;
+      if (obstacleTimer > 120 / gameSpeed) {
+        obstacles.push({
+          x: canvas.width,
+          y: canvas.height - 50,
+          width: 20,
+          height: 30
+        });
+        obstacleTimer = 0;
+      }
+
+      // Update and draw obstacles
+      for (let i = obstacles.length - 1; i >= 0; i--) {
+        const obs = obstacles[i];
+        obs.x -= gameSpeed;
+
+        // Draw obstacle (rock)
+        ctx.fillStyle = '#94a3b8';
+        ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
+
+        // Collision detection
+        if (
+          player.x < obs.x + obs.width &&
+          player.x + player.width > obs.x &&
+          player.y < obs.y + obs.height &&
+          player.y + player.height > obs.y
+        ) {
+          endGame();
+          return;
+        }
+
+        // Remove off-screen obstacles and increase score
+        if (obs.x + obs.width < 0) {
+          obstacles.splice(i, 1);
+          score++;
+          document.getElementById('gameScore').textContent = score;
+          
+          // Increase difficulty
+          if (score % 10 === 0) {
+            gameSpeed += 0.5;
+          }
+        }
+      }
+
+      // Draw score on canvas
+      ctx.fillStyle = '#f1f5f9';
+      ctx.font = '20px monospace';
+      ctx.fillText(`Score: ${score}`, 10, 30);
+
+      requestAnimationFrame(gameLoop);
+    }
+
+    // Game controls
+    canvas.addEventListener('click', () => {
+      if (!gameRunning) {
+        startGame();
+      } else {
+        jump();
+      }
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.code === 'Space') {
+        e.preventDefault();
+        if (!gameRunning) {
+          startGame();
+        } else {
+          jump();
+        }
+      }
+    });
+
+    // ==================== Web Serial API ====================
+    let port = null;
+    let writer = null;
+    let reader = null;
+    let isReading = false;
+
+    const connectBtn = document.getElementById('connectBtn');
+    const refreshBtn = document.getElementById('refreshBtn');
+    const startTimerBtn = document.getElementById('startTimerBtn');
+    const stopTimerBtn = document.getElementById('stopTimerBtn');
+    const calibrateBtn = document.getElementById('calibrateBtn');
+    const clearLogBtn = document.getElementById('clearLogBtn');
+    const intervalSelect = document.getElementById('intervalSelect');
+    
+    const connectionDot = document.getElementById('connectionDot');
+    const connectionStatus = document.getElementById('connectionStatus');
+    const portName = document.getElementById('portName');
+    const soilValue = document.getElementById('soilValue');
+    const soilState = document.getElementById('soilState');
+    const soilProgress = document.getElementById('soilProgress');
+    const logContainer = document.getElementById('logContainer');
+    const connectionAlert = document.getElementById('connectionAlert');
+
+    function log(message, type = 'info') {
+      const entry = document.createElement('div');
+      entry.className = `log-entry ${type}`;
+      
+      const timestamp = new Date().toLocaleTimeString();
+      let prefix = '→';
+      if (type === 'in') prefix = '←';
+      if (type === 'error') prefix = '⚠';
+      
+      entry.textContent = `[${timestamp}] ${prefix} ${message}`;
+      logContainer.appendChild(entry);
+      logContainer.scrollTop = logContainer.scrollHeight;
+    }
+
+    async function connect() {
+      if (!('serial' in navigator)) {
+        alert('Web Serial API not supported. Please use Chrome or Edge browser.');
+        return;
+      }
+
+      try {
+        port = await navigator.serial.requestPort();
+        await port.open({ baudRate: 115200 });
+
+        log('Serial port opened at 115200 baud', 'info');
+
+        const textEncoder = new TextEncoderStream();
+        const writableStreamClosed = textEncoder.readable.pipeTo(port.writable);
+        writer = textEncoder.writable.getWriter();
+
+        const textDecoder = new TextDecoderStream();
+        const readableStreamClosed = port.readable.pipeTo(textDecoder.writable);
+        reader = textDecoder.readable.getReader();
+
+        updateConnectionUI(true);
+        connectionAlert.style.display = 'none';
+
+        isReading = true;
+        readLoop();
+
+      } catch (error) {
+        log(`Connection error: ${error.message}`, 'error');
+      }
+    }
+
+    async function disconnect() {
+      isReading = false;
+      stopWateringTimer();
+
+      try {
+        if (reader) {
+          await reader.cancel();
+          await reader.releaseLock();
+        }
+        if (writer) {
+          await writer.close();
+        }
+        if (port) {
+          await port.close();
+        }
+      } catch (error) {
+        console.error('Disconnect error:', error);
+      }
+
+      port = null;
+      writer = null;
+      reader = null;
+
+      updateConnectionUI(false);
+      log('Disconnected from Arduino', 'info');
+    }
+
+    async function readLoop() {
+      let buffer = '';
+
+      while (isReading && reader) {
+        try {
+          const { value, done } = await reader.read();
+          if (done) break;
+          
+          buffer += value;
+          const lines = buffer.split('\n');
+          buffer = lines.pop();
+
+          for (const line of lines) {
+            const trimmed = line.trim();
+            if (trimmed) {
+              handleIncomingData(trimmed);
+            }
+          }
+        } catch (error) {
+          log(`Read error: ${error.message}`, 'error');
+          break;
+        }
+      }
+    }
+
+    async function sendCommand(command) {
+      if (!writer) {
+        log('Not connected to Arduino', 'error');
+        return;
+      }
+
+      try {
+        await writer.write(command + '\n');
+        log(command, 'out');
+      } catch (error) {
+        log(`Send error: ${error.message}`, 'error');
+      }
+    }
+
+    function handleIncomingData(data) {
+      log(data, 'in');
+
+      if (data.startsWith('Soil:')) {
+        const match = data.match(/Soil:\s*(\d+)/);
+        if (match) {
+          const value = parseInt(match[1]);
+          soilValue.textContent = value;
+          
+          const percentage = (value / 1023) * 100;
+          soilProgress.style.width = percentage + '%';
+        }
+
+        if (data.includes('STATE:WET')) {
+          soilState.textContent = '💧 Wet - No watering needed';
+          soilState.style.color = 'var(--accent-green)';
+          playWetMusic();
+        } else if (data.includes('STATE:DRY')) {
+          soilState.textContent = '🔥 Dry - Watering recommended';
+          soilState.style.color = 'var(--accent-red)';
+          playDryMusic();
+        } else if (data.includes('STATE:NORMAL')) {
+          soilState.textContent = '✓ Normal - Optimal moisture';
+          soilState.style.color = 'var(--accent-yellow)';
+          stopAllMusic();
+        }
+      }
+
+      if (data === 'TRIGGERED') {
+        log('💧 Watering cycle started', 'info');
+      } else if (data === 'DONE') {
+        log('✓ Watering cycle completed', 'info');
+      }
+    }
+
+    function updateConnectionUI(connected) {
+      if (connected) {
+        connectionDot.classList.add('connected');
+        connectionStatus.textContent = 'Connected';
+        portName.textContent = 'Arduino (115200)';
+        connectBtn.textContent = '🔌 Disconnect';
+        connectBtn.classList.remove('btn-primary');
+        connectBtn.classList.add('btn-secondary');
+        
+        refreshBtn.disabled = false;
+        startTimerBtn.disabled = false;
+        calibrateBtn.disabled = false;
+      } else {
+        connectionDot.classList.remove('connected');
+        connectionStatus.textContent = 'Disconnected';
+        portName.textContent = 'Not Connected';
+        connectBtn.textContent = '🔌 Connect Arduino';
+        connectBtn.classList.add('btn-primary');
+        connectBtn.classList.remove('btn-secondary');
+        
+        refreshBtn.disabled = true;
+        startTimerBtn.disabled = true;
+        stopTimerBtn.disabled = true;
+        calibrateBtn.disabled = true;
+        
+        soilValue.textContent = '---';
+        soilState.textContent = 'Waiting for data...';
+        soilProgress.style.width = '0%';
+      }
+    }
+
+    // Event Listeners
+    connectBtn.addEventListener('click', async () => {
+      if (port) {
+        await disconnect();
+      } else {
+        await connect();
+      }
+    });
+
+    refreshBtn.addEventListener('click', () => {
+      sendCommand('STATUS');
+    });
+
+    startTimerBtn.addEventListener('click', () => {
+      startWateringTimer();
+    });
+
+    stopTimerBtn.addEventListener('click', () => {
+      stopWateringTimer();
+    });
+
+    intervalSelect.addEventListener('change', onIntervalChange);
+
+    calibrateBtn.addEventListener('click', () => {
+      sendCommand('CALIBRATE');
+      log('Starting calibration...', 'info');
+    });
+
+    clearLogBtn.addEventListener('click', () => {
+      logContainer.innerHTML = '';
+      log('Log cleared', 'info');
+    });
+
+    document.getElementById('muteBtn').addEventListener('click', () => {
+      toggleMute();
+    });
+
+    // Initialize
+    loadSavedInterval(); // Load saved watering interval from local storage
+    updateIntervalInfo(); // Update display
+    
+    log('SoilSymphony initialized. Click "Connect Arduino" to begin.', 'info');
+    log('🎵 Music plays automatically: WET=432Hz | DRY=Alert | NORMAL=Silent', 'info');
+    log('🎮 Click the game canvas or press SPACE to play Plant Jump!', 'info');
+    
+    document.addEventListener('click', () => {
+      initAudio();
+    }, { once: true });
+  </script>
 </body>
 </html>
