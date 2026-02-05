@@ -411,35 +411,49 @@
 
       <!-- Auto-Watering Timer Card -->
       <div class="card">
-        <div class="card-title">⏰ Auto-Watering Timer</div>
+        <div class="card-title">⏰ Dry Soil Timer</div>
         
         <div class="metric">
-          <div class="metric-label">Next Watering In</div>
-          <div class="metric-value" id="timerDisplay">--:--</div>
-          <div class="metric-subtitle" id="timerStatus">Timer inactive</div>
+          <div class="metric-label">Time Since Dry</div>
+          <div class="metric-value" id="timerDisplay">--:--:--</div>
+          <div class="metric-subtitle" id="timerStatus">Waiting for dry soil...</div>
         </div>
 
         <div class="divider"></div>
 
-        <div class="metric-label">Watering Interval</div>
-        <select id="intervalSelect" class="btn btn-secondary" style="width: 100%; margin-top: 0.5rem; padding: 0.75rem;">
-          <option value="0.5">Every 30 minutes (Testing)</option>
-          <option value="1">Every 1 hour</option>
-          <option value="2">Every 2 hours</option>
-          <option value="6">Every 6 hours</option>
-          <option value="12">Every 12 hours</option>
-          <option value="24" selected>Every 24 hours (Default)</option>
-          <option value="48">Every 48 hours</option>
-          <option value="72">Every 3 days</option>
-          <option value="168">Every 7 days (Weekly)</option>
-        </select>
+        <div class="metric-label">Auto-Water After (when dry)</div>
+        <div style="display: flex; gap: 0.5rem; align-items: center; margin-top: 0.5rem;">
+          <input 
+            type="number" 
+            id="hoursInput" 
+            min="0" 
+            max="999" 
+            value="0" 
+            style="width: 70px; padding: 0.5rem; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-elevated); color: var(--text-primary); font-size: 1rem;"
+          />
+          <span style="color: var(--text-secondary);">hours</span>
+          
+          <input 
+            type="number" 
+            id="minutesInput" 
+            min="0" 
+            max="59" 
+            value="30" 
+            style="width: 70px; padding: 0.5rem; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-elevated); color: var(--text-primary); font-size: 1rem;"
+          />
+          <span style="color: var(--text-secondary);">minutes</span>
+          
+          <button class="btn btn-secondary" id="saveTimerBtn" style="padding: 0.5rem 1rem; margin-left: auto;">
+            💾 Save
+          </button>
+        </div>
 
         <div class="btn-group">
-          <button class="btn btn-primary" id="startTimerBtn" disabled>
-            ▶️ Start Timer
+          <button class="btn btn-primary" id="enableTimerBtn" disabled>
+            ✅ Enable Auto-Water
           </button>
-          <button class="btn btn-secondary" id="stopTimerBtn" disabled>
-            ⏸️ Stop Timer
+          <button class="btn btn-secondary" id="disableTimerBtn" disabled>
+            ⏸️ Disable
           </button>
           <button class="btn btn-secondary" id="calibrateBtn" disabled>
             📊 Calibrate
@@ -448,8 +462,8 @@
 
         <div class="divider"></div>
 
-        <div class="metric-subtitle" id="intervalInfo">
-          Current interval: 24 hours
+        <div class="metric-subtitle" id="timerInfo">
+          Auto-water disabled. Will trigger after 30 minutes of dry soil.
         </div>
       </div>
     </div>
@@ -593,132 +607,202 @@
       }
     }
 
-    // ==================== Watering Timer ====================
-    let wateringInterval = 24 * 60 * 60 * 1000; // Default 24 hours in milliseconds
-    let timerActive = false;
-    let nextWateringTime = null;
+    // ==================== Dry Soil Timer ====================
+    let dryTimerThreshold = 30 * 60 * 1000; // Default 30 minutes in milliseconds
+    let timerEnabled = false;
+    let soilBecameDryAt = null;
+    let currentSoilState = null;
     let timerIntervalId = null;
+    let hasWateredForThisDryCycle = false;
 
-    // Load saved interval from local storage
-    function loadSavedInterval() {
-      const savedInterval = localStorage.getItem('wateringIntervalHours');
-      if (savedInterval) {
-        const hours = parseFloat(savedInterval);
-        wateringInterval = hours * 60 * 60 * 1000;
-        document.getElementById('intervalSelect').value = savedInterval;
-        updateIntervalInfo();
-        log(`✓ Loaded saved interval: ${hours} hours`, 'info');
-      }
-    }
-
-    // Update interval info display
-    function updateIntervalInfo() {
-      const hours = wateringInterval / (60 * 60 * 1000);
-      let displayText;
+    // Load saved timer settings from local storage
+    function loadSavedTimerSettings() {
+      const savedHours = localStorage.getItem('dryTimerHours');
+      const savedMinutes = localStorage.getItem('dryTimerMinutes');
+      const savedEnabled = localStorage.getItem('dryTimerEnabled');
       
-      if (hours < 1) {
-        const minutes = Math.round(hours * 60);
-        displayText = `Current interval: ${minutes} minutes`;
-      } else if (hours === 1) {
-        displayText = 'Current interval: 1 hour';
-      } else if (hours < 24) {
-        displayText = `Current interval: ${hours} hours`;
-      } else if (hours === 24) {
-        displayText = 'Current interval: 24 hours (1 day)';
-      } else if (hours === 48) {
-        displayText = 'Current interval: 48 hours (2 days)';
-      } else if (hours === 72) {
-        displayText = 'Current interval: 72 hours (3 days)';
-      } else if (hours === 168) {
-        displayText = 'Current interval: 168 hours (7 days)';
-      } else {
-        const days = Math.round(hours / 24);
-        displayText = `Current interval: ${hours} hours (${days} days)`;
+      if (savedHours !== null) {
+        document.getElementById('hoursInput').value = savedHours;
+      }
+      if (savedMinutes !== null) {
+        document.getElementById('minutesInput').value = savedMinutes;
+      }
+      if (savedEnabled === 'true') {
+        timerEnabled = true;
       }
       
-      document.getElementById('intervalInfo').textContent = displayText;
+      updateTimerThreshold();
+      updateTimerInfo();
     }
 
-    // Handle interval selection change
-    function onIntervalChange(event) {
-      const hours = parseFloat(event.target.value);
-      wateringInterval = hours * 60 * 60 * 1000;
-      
-      // Save to local storage
-      localStorage.setItem('wateringIntervalHours', hours.toString());
-      
-      updateIntervalInfo();
-      log(`⏱️ Watering interval changed to ${hours} hours`, 'info');
-      
-      // If timer is active, restart it with new interval
-      if (timerActive) {
-        log('♻️ Restarting timer with new interval...', 'info');
-        stopWateringTimer();
-        setTimeout(() => startWateringTimer(), 100);
-      }
+    // Update timer threshold from inputs
+    function updateTimerThreshold() {
+      const hours = parseInt(document.getElementById('hoursInput').value) || 0;
+      const minutes = parseInt(document.getElementById('minutesInput').value) || 0;
+      dryTimerThreshold = (hours * 60 * 60 * 1000) + (minutes * 60 * 1000);
     }
 
-    function startWateringTimer() {
+    // Save timer settings
+    function saveTimerSettings() {
+      const hours = document.getElementById('hoursInput').value;
+      const minutes = document.getElementById('minutesInput').value;
+      
+      localStorage.setItem('dryTimerHours', hours);
+      localStorage.setItem('dryTimerMinutes', minutes);
+      
+      updateTimerThreshold();
+      updateTimerInfo();
+      
+      log(`💾 Timer saved: ${hours}h ${minutes}m after dry soil`, 'info');
+    }
+
+    // Enable auto-watering timer
+    function enableDryTimer() {
       if (!port) {
-        log('Connect Arduino first to start timer', 'error');
+        log('Connect Arduino first to enable timer', 'error');
         return;
       }
 
-      timerActive = true;
-      nextWateringTime = Date.now() + wateringInterval;
+      timerEnabled = true;
+      localStorage.setItem('dryTimerEnabled', 'true');
       
-      if (timerIntervalId) clearInterval(timerIntervalId);
+      document.getElementById('enableTimerBtn').disabled = true;
+      document.getElementById('disableTimerBtn').disabled = false;
+      document.getElementById('hoursInput').disabled = true;
+      document.getElementById('minutesInput').disabled = true;
+      document.getElementById('saveTimerBtn').disabled = true;
       
-      timerIntervalId = setInterval(updateTimerDisplay, 1000);
-      updateTimerDisplay();
+      updateTimerInfo();
       
-      const hours = wateringInterval / (60 * 60 * 1000);
-      log(`⏰ Auto-watering timer started (${hours} hour interval)`, 'info');
-      document.getElementById('timerStatus').textContent = 'Timer active';
-      document.getElementById('startTimerBtn').disabled = true;
-      document.getElementById('stopTimerBtn').disabled = false;
-      document.getElementById('intervalSelect').disabled = true;
+      const hours = parseInt(document.getElementById('hoursInput').value) || 0;
+      const minutes = parseInt(document.getElementById('minutesInput').value) || 0;
+      log(`✅ Auto-water enabled: Will water ${hours}h ${minutes}m after soil becomes dry`, 'info');
+      
+      // Start monitoring if already dry
+      if (currentSoilState === 'DRY' && !soilBecameDryAt) {
+        soilBecameDryAt = Date.now();
+        hasWateredForThisDryCycle = false;
+        startTimerDisplay();
+      }
     }
 
-    function stopWateringTimer() {
-      timerActive = false;
-      nextWateringTime = null;
+    // Disable auto-watering timer
+    function disableDryTimer() {
+      timerEnabled = false;
+      soilBecameDryAt = null;
+      hasWateredForThisDryCycle = false;
+      localStorage.setItem('dryTimerEnabled', 'false');
       
+      stopTimerDisplay();
+      
+      document.getElementById('enableTimerBtn').disabled = false;
+      document.getElementById('disableTimerBtn').disabled = true;
+      document.getElementById('hoursInput').disabled = false;
+      document.getElementById('minutesInput').disabled = false;
+      document.getElementById('saveTimerBtn').disabled = false;
+      document.getElementById('timerDisplay').textContent = '--:--:--';
+      document.getElementById('timerStatus').textContent = 'Auto-water disabled';
+      
+      updateTimerInfo();
+      log('⏸️ Auto-water disabled', 'info');
+    }
+
+    // Start timer display updates
+    function startTimerDisplay() {
+      if (timerIntervalId) clearInterval(timerIntervalId);
+      timerIntervalId = setInterval(updateDryTimerDisplay, 1000);
+      updateDryTimerDisplay();
+    }
+
+    // Stop timer display
+    function stopTimerDisplay() {
       if (timerIntervalId) {
         clearInterval(timerIntervalId);
         timerIntervalId = null;
       }
-      
-      document.getElementById('timerDisplay').textContent = '--:--:--';
-      document.getElementById('timerStatus').textContent = 'Timer stopped';
-      document.getElementById('startTimerBtn').disabled = false;
-      document.getElementById('stopTimerBtn').disabled = true;
-      document.getElementById('intervalSelect').disabled = false;
-      
-      log('⏸️ Auto-watering timer stopped', 'info');
     }
 
-    function updateTimerDisplay() {
-      if (!timerActive || !nextWateringTime) return;
-      
-      const now = Date.now();
-      const timeLeft = nextWateringTime - now;
-      
-      if (timeLeft <= 0) {
-        // Time to water!
-        sendCommand('TRIGGER');
-        log('💧 Auto-watering triggered by timer', 'info');
-        
-        // Reset timer for next cycle
-        nextWateringTime = Date.now() + wateringInterval;
+    // Update timer display
+    function updateDryTimerDisplay() {
+      if (!timerEnabled || !soilBecameDryAt) {
+        document.getElementById('timerDisplay').textContent = '--:--:--';
+        if (timerEnabled) {
+          document.getElementById('timerStatus').textContent = 'Waiting for dry soil...';
+        }
+        return;
       }
       
-      const hours = Math.floor(timeLeft / (1000 * 60 * 60));
-      const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
-      const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+      const now = Date.now();
+      const timeDry = now - soilBecameDryAt;
+      const timeLeft = dryTimerThreshold - timeDry;
+      
+      // Check if it's time to water
+      if (timeDry >= dryTimerThreshold && !hasWateredForThisDryCycle) {
+        sendCommand('TRIGGER');
+        log('💧 Auto-watering triggered! Soil dry for too long.', 'info');
+        hasWateredForThisDryCycle = true;
+        document.getElementById('timerStatus').textContent = 'Watering triggered!';
+        return;
+      }
+      
+      // Display elapsed time
+      const hours = Math.floor(timeDry / (1000 * 60 * 60));
+      const minutes = Math.floor((timeDry % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((timeDry % (1000 * 60)) / 1000);
       
       document.getElementById('timerDisplay').textContent = 
         `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+      
+      if (!hasWateredForThisDryCycle) {
+        const hoursLeft = Math.floor(Math.max(0, timeLeft) / (1000 * 60 * 60));
+        const minutesLeft = Math.floor((Math.max(0, timeLeft) % (1000 * 60 * 60)) / (1000 * 60));
+        document.getElementById('timerStatus').textContent = `Will water in ${hoursLeft}h ${minutesLeft}m`;
+      }
+    }
+
+    // Update timer info text
+    function updateTimerInfo() {
+      const hours = parseInt(document.getElementById('hoursInput').value) || 0;
+      const minutes = parseInt(document.getElementById('minutesInput').value) || 0;
+      
+      let timeText = '';
+      if (hours > 0 && minutes > 0) {
+        timeText = `${hours} hour${hours > 1 ? 's' : ''} ${minutes} minute${minutes > 1 ? 's' : ''}`;
+      } else if (hours > 0) {
+        timeText = `${hours} hour${hours > 1 ? 's' : ''}`;
+      } else {
+        timeText = `${minutes} minute${minutes > 1 ? 's' : ''}`;
+      }
+      
+      const statusText = timerEnabled ? 'Auto-water enabled' : 'Auto-water disabled';
+      document.getElementById('timerInfo').textContent = 
+        `${statusText}. Will trigger after ${timeText} of dry soil.`;
+    }
+
+    // Handle soil state changes
+    function handleSoilStateChange(newState) {
+      const previousState = currentSoilState;
+      currentSoilState = newState;
+      
+      if (!timerEnabled) return;
+      
+      // Soil just became DRY
+      if (newState === 'DRY' && previousState !== 'DRY') {
+        soilBecameDryAt = Date.now();
+        hasWateredForThisDryCycle = false;
+        startTimerDisplay();
+        log('⏱️ Soil is now DRY - timer started', 'info');
+      }
+      
+      // Soil is no longer DRY (became WET or NORMAL)
+      if (newState !== 'DRY' && previousState === 'DRY') {
+        soilBecameDryAt = null;
+        hasWateredForThisDryCycle = false;
+        stopTimerDisplay();
+        document.getElementById('timerDisplay').textContent = '--:--:--';
+        document.getElementById('timerStatus').textContent = 'Waiting for dry soil...';
+        log('✓ Soil no longer dry - timer reset', 'info');
+      }
     }
 
     // ==================== Plant Jump Game ====================
@@ -914,11 +998,13 @@
 
     const connectBtn = document.getElementById('connectBtn');
     const refreshBtn = document.getElementById('refreshBtn');
-    const startTimerBtn = document.getElementById('startTimerBtn');
-    const stopTimerBtn = document.getElementById('stopTimerBtn');
+    const enableTimerBtn = document.getElementById('enableTimerBtn');
+    const disableTimerBtn = document.getElementById('disableTimerBtn');
+    const saveTimerBtn = document.getElementById('saveTimerBtn');
     const calibrateBtn = document.getElementById('calibrateBtn');
     const clearLogBtn = document.getElementById('clearLogBtn');
-    const intervalSelect = document.getElementById('intervalSelect');
+    const hoursInput = document.getElementById('hoursInput');
+    const minutesInput = document.getElementById('minutesInput');
     
     const connectionDot = document.getElementById('connectionDot');
     const connectionStatus = document.getElementById('connectionStatus');
@@ -976,7 +1062,9 @@
 
     async function disconnect() {
       isReading = false;
-      stopWateringTimer();
+      if (timerEnabled) {
+        disableDryTimer();
+      }
 
       try {
         if (reader) {
@@ -1057,14 +1145,17 @@
           soilState.textContent = '💧 Wet - No watering needed';
           soilState.style.color = 'var(--accent-green)';
           playWetMusic();
+          handleSoilStateChange('WET');
         } else if (data.includes('STATE:DRY')) {
           soilState.textContent = '🔥 Dry - Watering recommended';
           soilState.style.color = 'var(--accent-red)';
           playDryMusic();
+          handleSoilStateChange('DRY');
         } else if (data.includes('STATE:NORMAL')) {
           soilState.textContent = '✓ Normal - Optimal moisture';
           soilState.style.color = 'var(--accent-yellow)';
           stopAllMusic();
+          handleSoilStateChange('NORMAL');
         }
       }
 
@@ -1085,7 +1176,7 @@
         connectBtn.classList.add('btn-secondary');
         
         refreshBtn.disabled = false;
-        startTimerBtn.disabled = false;
+        enableTimerBtn.disabled = false;
         calibrateBtn.disabled = false;
       } else {
         connectionDot.classList.remove('connected');
@@ -1096,8 +1187,8 @@
         connectBtn.classList.remove('btn-secondary');
         
         refreshBtn.disabled = true;
-        startTimerBtn.disabled = true;
-        stopTimerBtn.disabled = true;
+        enableTimerBtn.disabled = true;
+        disableTimerBtn.disabled = true;
         calibrateBtn.disabled = true;
         
         soilValue.textContent = '---';
@@ -1119,15 +1210,17 @@
       sendCommand('STATUS');
     });
 
-    startTimerBtn.addEventListener('click', () => {
-      startWateringTimer();
+    enableTimerBtn.addEventListener('click', () => {
+      enableDryTimer();
     });
 
-    stopTimerBtn.addEventListener('click', () => {
-      stopWateringTimer();
+    disableTimerBtn.addEventListener('click', () => {
+      disableDryTimer();
     });
 
-    intervalSelect.addEventListener('change', onIntervalChange);
+    saveTimerBtn.addEventListener('click', () => {
+      saveTimerSettings();
+    });
 
     calibrateBtn.addEventListener('click', () => {
       sendCommand('CALIBRATE');
@@ -1144,8 +1237,7 @@
     });
 
     // Initialize
-    loadSavedInterval(); // Load saved watering interval from local storage
-    updateIntervalInfo(); // Update display
+    loadSavedTimerSettings(); // Load saved timer settings from local storage
     
     log('SoilSymphony initialized. Click "Connect Arduino" to begin.', 'info');
     log('🎵 Music plays automatically: WET=432Hz | DRY=Alert | NORMAL=Silent', 'info');
