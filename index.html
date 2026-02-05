@@ -1,677 +1,764 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>SoilSymphony – Smart Watering System</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <style>
-    :root {
-      --bg: #050816;
-      --card: #0b1020;
-      --accent: #4ade80;
-      --accent-soft: rgba(74, 222, 128, 0.15);
-      --danger: #fb7185;
-      --warning: #facc15;
-      --muted: #9ca3af;
-      --text: #e5e7eb;
-      --border: #1f2933;
-      --shadow-soft: 0 18px 45px rgba(15, 23, 42, 0.7);
-      --radius-lg: 18px;
-      --radius-pill: 999px;
-      --transition-fast: 0.18s ease-out;
-      --transition-med: 0.25s ease-out;
-      --glass: rgba(15, 23, 42, 0.85);
-    }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    body {
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
-        "Segoe UI", sans-serif;
-      background: radial-gradient(circle at top, #1e293b 0, #020617 45%, #000 100%);
-      color: var(--text);
-      min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
-      padding: 32px 16px;
-    }
-
-    .app {
-      width: 100%;
-      max-width: 1100px;
-      display: grid;
-      grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
-      gap: 24px;
-    }
-
-    @media (max-width: 900px) {
-      .app {
-        grid-template-columns: minmax(0, 1fr);
-      }
-    }
-
-    .card {
-      background: var(--glass);
-      border-radius: var(--radius-lg);
-      border: 1px solid rgba(148, 163, 184, 0.2);
-      box-shadow: var(--shadow-soft);
-      backdrop-filter: blur(18px);
-      padding: 20px 22px;
-    }
-
-    .header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 12px;
-    }
-
-    .title {
-      font-size: 1.5rem;
-      font-weight: 700;
-      letter-spacing: 0.03em;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .title-badge {
-      font-size: 0.75rem;
-      padding: 3px 9px;
-      border-radius: 999px;
-      background: rgba(148, 163, 184, 0.1);
-      border: 1px solid rgba(148, 163, 184, 0.26);
-      text-transform: uppercase;
-      letter-spacing: 0.14em;
-      color: var(--muted);
-    }
-
-    .status-chip {
-      padding: 6px 14px;
-      border-radius: 999px;
-      border: 1px solid rgba(148, 163, 184, 0.35);
-      font-size: 0.78rem;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      color: var(--muted);
-    }
-
-    .status-dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      background: #22c55e;
-      box-shadow: 0 0 10px rgba(34, 197, 94, 0.6);
-    }
-
-    .subtitle {
-      font-size: 0.9rem;
-      color: var(--muted);
-      margin-bottom: 12px;
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 12px;
-      margin-top: 8px;
-    }
-
-    .metric {
-      background: rgba(15, 23, 42, 0.9);
-      border-radius: 16px;
-      border: 1px solid rgba(148, 163, 184, 0.3);
-      padding: 12px 13px;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    .metric-label {
-      font-size: 0.75rem;
-      text-transform: uppercase;
-      letter-spacing: 0.12em;
-      color: var(--muted);
-    }
-
-    .metric-value {
-      font-size: 1.1rem;
-      font-weight: 600;
-    }
-
-    .metric-pill {
-      font-size: 0.78rem;
-      padding: 4px 10px;
-      border-radius: 999px;
-      background: rgba(15, 23, 42, 0.9);
-      border: 1px solid rgba(148, 163, 184, 0.4);
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      margin-top: 2px;
-      color: var(--muted);
-    }
-
-    .pill-dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: var(--accent);
-    }
-
-    .controls {
-      margin-top: 16px;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-    }
-
-    button {
-      border: none;
-      cursor: pointer;
-    }
-
-    .btn {
-      border-radius: var(--radius-pill);
-      padding: 9px 18px;
-      font-size: 0.9rem;
-      font-weight: 500;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      transition: transform var(--transition-fast),
-        box-shadow var(--transition-fast),
-        background var(--transition-fast),
-        border-color var(--transition-fast);
-      border: 1px solid transparent;
-    }
-
-    .btn-primary {
-      background: linear-gradient(135deg, #22c55e, #16a34a);
-      color: #04101c;
-      box-shadow: 0 10px 28px rgba(34, 197, 94, 0.45);
-    }
-
-    .btn-primary:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 14px 36px rgba(34, 197, 94, 0.5);
-    }
-
-    .btn-secondary {
-      background: rgba(15, 23, 42, 0.9);
-      color: var(--text);
-      border-color: rgba(148, 163, 184, 0.35);
-    }
-
-    .btn-secondary:hover {
-      background: rgba(15, 23, 42, 1);
-    }
-
-    .btn-ghost {
-      background: transparent;
-      color: var(--muted);
-      border-color: rgba(148, 163, 184, 0.3);
-    }
-
-    .btn-icon {
-      width: 28px;
-      height: 28px;
-      border-radius: 999px;
-      background: rgba(15, 23, 42, 0.95);
-      border: 1px solid rgba(148, 163, 184, 0.4);
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--muted);
-      font-size: 0.78rem;
-    }
-
-    .btn.disabled {
-      opacity: 0.4;
-      cursor: default;
-    }
-
-    .log-card {
-      margin-top: 14px;
-      background: rgba(15, 23, 42, 0.8);
-      border-radius: 16px;
-      border: 1px dashed rgba(148, 163, 184, 0.4);
-      padding: 10px 12px;
-      max-height: 230px;
-      overflow: auto;
-      font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo,
-        Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-      font-size: 0.78rem;
-      color: var(--muted);
-    }
-
-    .log-line {
-      margin-bottom: 3px;
-      white-space: pre-wrap;
-      word-break: break-word;
-    }
-
-    .right-card-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 8px;
-    }
-
-    .soil-bar {
-      margin-top: 12px;
-      height: 12px;
-      border-radius: 999px;
-      background: rgba(15, 23, 42, 0.9);
-      border: 1px solid rgba(148, 163, 184, 0.3);
-      overflow: hidden;
-      position: relative;
-    }
-
-    .soil-bar-fill {
-      position: absolute;
-      left: 0;
-      top: 0;
-      bottom: 0;
-      width: 0%;
-      background: linear-gradient(90deg, #22c55e, #facc15, #fb7185);
-      transition: width 0.4s ease-out;
-    }
-
-    .soil-bar-labels {
-      display: flex;
-      justify-content: space-between;
-      margin-top: 4px;
-      font-size: 0.7rem;
-      color: var(--muted);
-    }
-
-    .connection-indicator {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      padding: 3px 9px;
-      border-radius: 999px;
-      border: 1px solid rgba(148, 163, 184, 0.3);
-      font-size: 0.72rem;
-      color: var(--muted);
-    }
-
-    .connection-dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 999px;
-      background: #f97316;
-      box-shadow: 0 0 9px rgba(249, 115, 22, 0.7);
-    }
-
-    .connection-dot.connected {
-      background: #22c55e;
-      box-shadow: 0 0 9px rgba(34, 197, 94, 0.7);
-    }
-
-    .mini-label {
-      font-size: 0.7rem;
-      text-transform: uppercase;
-      letter-spacing: 0.15em;
-      color: var(--muted);
-      margin-bottom: 4px;
-    }
-
-    .mini-value {
-      font-size: 0.88rem;
-      color: var(--text);
-    }
-
-    .divider {
-      height: 1px;
-      background: radial-gradient(circle, rgba(148, 163, 184, 0.5), transparent);
-      margin: 14px 0;
-    }
-
-    .hint {
-      font-size: 0.72rem;
-      color: var(--muted);
-      margin-top: 6px;
-    }
-
-    .hint strong {
-      color: var(--accent);
-      font-weight: 600;
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SoilSymphony – Smart Watering System</title>
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+:root {
+  --bg-dark: #0a0e1a;
+  --bg-card: #12172b;
+  --bg-elevated: #1a2035;
+  --accent-green: #22c55e;
+  --accent-blue: #3b82f6;
+  --accent-yellow: #fbbf24;
+  --accent-red: #ef4444;
+  --text-primary: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --border: #1e293b;
+  --shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+}
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    'Helvetica Neue', Arial, sans-serif;
+  background: linear-gradient(135deg, var(--bg-dark) 0%, #050810 100%);
+  color: var(--text-primary);
+  min-height: 100vh;
+  padding: 2rem 1rem;
+}
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+.header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+.header h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--accent-green), var(--accent-blue));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 0.5rem;
+}
+.header p {
+  color: var(--text-secondary);
+  font-size: 1.1rem;
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: var(--shadow);
+}
+.card-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 999px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+}
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent-red);
+  animation: pulse 2s infinite;
+}
+.status-dot.connected {
+  background: var(--accent-green);
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+.metric-group {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+.metric {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1rem;
+}
+.metric-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+  margin-bottom: 0.5rem;
+}
+.metric-value {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.metric-subtitle {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin-top: 0.25rem;
+}
+.progress-bar {
+  height: 12px;
+  background: var(--bg-elevated);
+  border-radius: 999px;
+  overflow: hidden;
+  margin-top: 1rem;
+  border: 1px solid var(--border);
+}
+.progress-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--accent-green), var(--accent-yellow), var(--accent-red));
+  transition: width 0.2s ease;
+}
+.progress-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+.btn-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+.btn {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.btn-primary {
+  background: linear-gradient(135deg, var(--accent-green), #16a34a);
+  color: white;
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+}
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(34, 197, 94, 0.4);
+}
+.btn-secondary {
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+}
+.btn-secondary:hover:not(:disabled) {
+  background: #242d45;
+}
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.log-container {
+  background: var(--bg-elevated);
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+  padding: 1rem;
+  max-height: 400px;
+  overflow-y: auto;
+  font-family: 'Courier New', monospace;
+  font-size: 0.875rem;
+  margin-top: 1rem;
+}
+.log-entry {
+  padding: 0.25rem 0;
+  color: var(--text-secondary);
+}
+.log-entry.in {
+  color: var(--accent-blue);
+}
+.log-entry.out {
+  color: var(--accent-green);
+}
+.log-entry.error {
+  color: var(--accent-red);
+}
+.alert {
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  border-left: 4px solid;
+}
+.alert-info {
+  background: rgba(59, 130, 246, 0.1);
+  border-color: var(--accent-blue);
+  color: var(--accent-blue);
+}
+.divider {
+  height: 1px;
+  background: var(--border);
+  margin: 1.5rem 0;
+}
+@media (max-width: 768px) {
+  .header h1 {
+    font-size: 2rem;
+  }
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+</style>
 </head>
 <body>
-  <main class="app">
-    <!-- LEFT: Control & Logs -->
-    <section class="card">
-      <header class="header">
-        <div>
-          <div class="title">
-            SoilSymphony
-            <span class="title-badge">SMART WATERING</span>
-          </div>
-        </div>
-        <div class="status-chip" id="statusChip">
-          <span class="status-dot"></span>
-          <span id="statusText">Idle</span>
-        </div>
-      </header>
+<div class="container">
+  <!-- Header -->
+  <div class="header">
+    <h1>🌱 SoilSymphony</h1>
+    <p>Smart Arduino-Powered Plant Watering System</p>
+  </div>
 
-      <p class="subtitle">
-        Monitor soil moisture and trigger watering through your Arduino‑powered servo pump.
-      </p>
+  <!-- Connection Alert -->
+  <div class="alert alert-info" id="connectionAlert">
+    <strong>📌 Setup Required:</strong> Use Chrome or Edge browser. Click "Connect Arduino" and select your serial port.
+  </div>
 
-      <div class="grid">
-        <div class="metric">
-          <div class="metric-label">Soil Moisture</div>
-          <div class="metric-value" id="soilValueLabel">‑‑‑</div>
-          <div class="metric-pill" id="soilStatePill">
-            <span class="pill-dot"></span>
-            <span id="soilStateText">Unknown</span>
-          </div>
-        </div>
-        <div class="metric">
-          <div class="metric-label">Pump Status</div>
-          <div class="metric-value" id="pumpStatusLabel">Idle</div>
-          <div class="metric-pill">
-            <span class="pill-dot"></span>
-            <span id="pumpLastAction">Waiting…</span>
-          </div>
-        </div>
-        <div class="metric">
-          <div class="metric-label">Connection</div>
-          <div class="metric-value" id="connectionLabel">Disconnected</div>
-          <div class="metric-pill">
-            <span class="pill-dot"></span>
-            <span id="portName">No port</span>
-          </div>
+  <!-- Music Control Panel -->
+  <div style="text-align: center; margin-bottom: 1.5rem;">
+    <div style="display: inline-flex; gap: 1rem; align-items: center; background: var(--bg-card); padding: 1rem 1.5rem; border-radius: 12px; border: 1px solid var(--border);">
+      <button class="btn btn-secondary" id="muteBtn" style="padding: 0.5rem 1.5rem;">
+        🔊 Sound: ON
+      </button>
+      <div id="musicStatus" style="color: var(--text-secondary); font-size: 0.875rem; min-width: 300px;">
+        <div>⏸️ No music playing</div>
+        <div style="font-size: 0.75rem; opacity: 0.7; margin-top: 0.25rem;">
+          Music plays automatically based on soil moisture
         </div>
       </div>
+    </div>
+  </div>
 
-      <div class="controls">
+  <!-- Music Legend -->
+  <div style="text-align: center; margin-bottom: 1.5rem; color: var(--text-secondary); font-size: 0.875rem;">
+    <div style="display: inline-flex; gap: 2rem; background: var(--bg-elevated); padding: 0.75rem 1.5rem; border-radius: 8px; border: 1px solid var(--border);">
+      <div><span style="color: var(--accent-green);">💧 WET</span> → 432 Hz Meditation Music</div>
+      <div><span style="color: var(--accent-red);">🔥 DRY</span> → Alert Recording</div>
+      <div><span style="color: var(--accent-yellow);">✓ NORMAL</span> → No Music</div>
+    </div>
+  </div>
+
+  <!-- Main Grid -->
+  <div class="grid">
+    <!-- Connection Card -->
+    <div class="card">
+      <div class="card-title">
+        🔌 Connection
+        <div style="margin-left: auto;">
+          <span class="status-badge">
+            <span class="status-dot" id="connectionDot"></span>
+            <span id="connectionStatus">Disconnected</span>
+          </span>
+        </div>
+      </div>
+      <div class="metric-group">
+        <div class="metric">
+          <div class="metric-label">Serial Port</div>
+          <div class="metric-value" id="portName">Not Connected</div>
+          <div class="metric-subtitle">Baud Rate: 115200</div>
+        </div>
+      </div>
+      <div class="btn-group">
         <button class="btn btn-primary" id="connectBtn">
-          <span>🔌 Connect Arduino</span>
+          🔌 Connect Arduino
         </button>
-
-        <button class="btn btn-secondary" id="waterNowBtn" disabled>
-          💧 Water Now
-        </button>
-
-        <button class="btn btn-ghost" id="statusBtn" disabled>
+        <button class="btn btn-secondary" id="refreshBtn" disabled>
           🔄 Refresh Status
         </button>
+      </div>
+    </div>
 
-        <button class="btn-icon" id="clearLogBtn" title="Clear log">
-          ⌫
+    <!-- Soil Moisture Card -->
+    <div class="card">
+      <div class="card-title">💧 Soil Moisture</div>
+      <div class="metric">
+        <div class="metric-label">Current Reading</div>
+        <div class="metric-value" id="soilValue">---</div>
+        <div class="metric-subtitle" id="soilState">Waiting for data...</div>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill" id="soilProgress"></div>
+      </div>
+      <div class="progress-labels">
+        <span>Wet (0)</span>
+        <span>Normal (512)</span>
+        <span>Dry (1023)</span>
+      </div>
+      <div class="divider"></div>
+      <div class="metric-label">Thresholds</div>
+      <div class="metric-subtitle">
+        Wet: &lt; 400 | Normal: 400-700 | Dry: &gt; 700
+      </div>
+    </div>
+
+    <!-- Plant Mini-Game Card -->
+    <div class="card">
+      <div class="card-title">🎮 Plant Mini‑Game</div>
+
+      <div class="metric">
+        <div class="metric-label">Game Status</div>
+        <div class="metric-value" id="gameStatus">Idle</div>
+        <div class="metric-subtitle" id="gameHint">
+          Click "Water Now" to start a 10‑second challenge.
+        </div>
+      </div>
+
+      <div class="metric" style="margin-top:1rem;">
+        <div class="metric-label">Scoreboard</div>
+        <div class="metric-subtitle" id="scoreboard">
+          Score: 0 | Best: 0 | Tries: 0 | Streak: 0
+        </div>
+      </div>
+
+      <div class="progress-bar" style="margin-top:1rem;">
+        <div class="progress-fill" id="gameProgress"></div>
+      </div>
+      <div class="progress-labels">
+        <span>0s</span>
+        <span>10s</span>
+      </div>
+
+      <div class="btn-group">
+        <button class="btn btn-primary" id="waterBtn" disabled>
+          💦 Water Now (Start Game)
         </button>
-      </div>
-
-      <div class="hint">
-        Use Chrome/Edge on desktop and allow Serial permission when prompted.
-      </div>
-
-      <div class="log-card" id="logBox"></div>
-    </section>
-
-    <!-- RIGHT: Live Data / Soil Meter -->
-    <section class="card">
-      <div class="right-card-header">
-        <div>
-          <div class="mini-label">Soil Profile</div>
-          <div class="mini-value">Live analog reading from A0</div>
-        </div>
-        <div class="connection-indicator" id="connIndicator">
-          <span class="connection-dot" id="connDot"></span>
-          <span id="connText">Disconnected</span>
-        </div>
-      </div>
-
-      <div class="soil-bar" id="soilBar">
-        <div class="soil-bar-fill" id="soilBarFill"></div>
-      </div>
-      <div class="soil-bar-labels">
-        <span>Wet</span>
-        <span>Normal</span>
-        <span>Dry</span>
+        <button class="btn btn-secondary" id="calibrateBtn" disabled>
+          ♻️ Reset Stats
+        </button>
       </div>
 
       <div class="divider"></div>
-
-      <div class="mini-label">Integration</div>
-      <div class="mini-value">
-        Arduino sends:
-        <code>STATE:WET / STATE:DRY / STATE:NORMAL</code>,
-        <code>TRIGGERED</code>, <code>DONE</code>, and status lines.
-        This page sends <code>TRIGGER</code> and <code>STATUS</code> over Serial.
+      <div class="metric-label">How to play</div>
+      <div class="metric-subtitle">
+        Keep the soil in the green zone (400‑700) during the 10‑second round. Every valid reading in range earns 1 point.
       </div>
-    </section>
-  </main>
+    </div>
+  </div>
 
-  <script>
-    // ================== Web Serial Setup ==================
+  <!-- Log Card -->
+  <div class="card">
+    <div class="card-title">
+      📋 System Log
+      <button class="btn btn-secondary" id="clearLogBtn" style="margin-left: auto; padding: 0.5rem 1rem;">
+        🗑️ Clear
+      </button>
+    </div>
+    <div class="log-container" id="logContainer"></div>
+  </div>
+</div>
 
-    let port = null;
-    let writer = null;
-    let reader = null;
-    let readLoopActive = false;
+<script>
+// ==================== Audio System ====================
+let wetMusic = null;
+let dryAlert = null;
+let isMuted = false;
+let currentlyPlaying = null;
 
-    const connectBtn = document.getElementById("connectBtn");
-    const waterNowBtn = document.getElementById("waterNowBtn");
-    const statusBtn = document.getElementById("statusBtn");
-    const clearLogBtn = document.getElementById("clearLogBtn");
+const MUSIC_URLS = {
+  wet: 'https://raw.githubusercontent.com/Vedharsh7373/soilsymphony/main/432%20Hz%20-%20Positive%20Energy%20Meditation%20Music%20Deep%20Healing%20Music%20for%20The%20Body%20and%20Soul.mp3',
+  dry: 'https://raw.githubusercontent.com/Vedharsh7373/soilsymphony/main/Record%20(online-voice-recorder.com).mp3'
+};
 
-    const logBox = document.getElementById("logBox");
-    const soilValueLabel = document.getElementById("soilValueLabel");
-    const soilStateText = document.getElementById("soilStateText");
-    const soilStatePill = document.getElementById("soilStatePill");
-    const pumpStatusLabel = document.getElementById("pumpStatusLabel");
-    const pumpLastAction = document.getElementById("pumpLastAction");
-    const connectionLabel = document.getElementById("connectionLabel");
-    const portName = document.getElementById("portName");
-    const soilBarFill = document.getElementById("soilBarFill");
+function initAudio() {
+  if (!wetMusic) {
+    wetMusic = new Audio(MUSIC_URLS.wet);
+    wetMusic.loop = true;
+    wetMusic.volume = 0.4;
+  }
+  if (!dryAlert) {
+    dryAlert = new Audio(MUSIC_URLS.dry);
+    dryAlert.loop = true;
+    dryAlert.volume = 0.9;
+  }
+}
 
-    const statusChip = document.getElementById("statusChip");
-    const statusText = document.getElementById("statusText");
-    const connDot = document.getElementById("connDot");
-    const connText = document.getElementById("connText");
+function stopAllMusic() {
+  if (wetMusic) { wetMusic.pause(); wetMusic.currentTime = 0; }
+  if (dryAlert) { dryAlert.pause(); dryAlert.currentTime = 0; }
+  currentlyPlaying = null;
+  updateMusicStatus();
+}
 
-    function log(line, kind = "info") {
-      const el = document.createElement("div");
-      el.className = "log-line";
-      let prefix = "";
-      if (kind === "out") prefix = "→ ";
-      if (kind === "in") prefix = "← ";
-      if (kind === "error") prefix = "⚠ ";
-      el.textContent = prefix + line;
-      logBox.appendChild(el);
-      logBox.scrollTop = logBox.scrollHeight;
+function playWetMusic() {
+  if (isMuted || !wetMusic) return;
+  if (currentlyPlaying === 'wet') return;
+  stopAllMusic();
+  wetMusic.currentTime = 0;
+  wetMusic.play().then(() => {
+    currentlyPlaying = 'wet';
+    updateMusicStatus();
+  });
+}
+
+function playDryMusic() {
+  if (isMuted || !dryAlert) return;
+  if (currentlyPlaying === 'dry') return;
+  stopAllMusic();
+  dryAlert.currentTime = 0;
+  dryAlert.play().then(() => {
+    currentlyPlaying = 'dry';
+    updateMusicStatus();
+  });
+}
+
+function updateMusicStatus() {
+  const statusDiv = document.getElementById('musicStatus');
+  if (!statusDiv) return;
+  if (isMuted) {
+    statusDiv.innerHTML = '<div style="color: var(--text-secondary);">🔇 Audio muted</div>';
+  } else if (currentlyPlaying === 'wet') {
+    statusDiv.innerHTML = '<div style="color: var(--accent-green); font-weight: 600;">🎵 NOW PLAYING: 432 Hz Meditation Music</div>';
+  } else if (currentlyPlaying === 'dry') {
+    statusDiv.innerHTML = '<div style="color: var(--accent-red); font-weight: 600;">🔔 NOW PLAYING: Dry Alert Recording</div>';
+  } else {
+    statusDiv.innerHTML = '<div style="color: var(--text-secondary);">⏸️ No music playing</div>';
+  }
+}
+
+function toggleMute() {
+  isMuted = !isMuted;
+  if (isMuted) stopAllMusic();
+  const btn = document.getElementById('muteBtn');
+  if (btn) btn.textContent = isMuted ? '🔇 Sound: OFF' : '🔊 Sound: ON';
+  updateMusicStatus();
+}
+
+// ==================== Web Serial & Game ====================
+let port = null;
+let writer = null;
+let reader = null;
+let isReading = false;
+
+// DOM elements
+const connectBtn = document.getElementById('connectBtn');
+const refreshBtn = document.getElementById('refreshBtn');
+const waterBtn = document.getElementById('waterBtn');
+const calibrateBtn = document.getElementById('calibrateBtn');
+const clearLogBtn = document.getElementById('clearLogBtn');
+const connectionDot = document.getElementById('connectionDot');
+const connectionStatus = document.getElementById('connectionStatus');
+const portName = document.getElementById('portName');
+const soilValue = document.getElementById('soilValue');
+const soilState = document.getElementById('soilState');
+const soilProgress = document.getElementById('soilProgress');
+const logContainer = document.getElementById('logContainer');
+const connectionAlert = document.getElementById('connectionAlert');
+const gameStatus = document.getElementById('gameStatus');
+const gameHint = document.getElementById('gameHint');
+const scoreboard = document.getElementById('scoreboard');
+const gameProgress = document.getElementById('gameProgress');
+
+// Game variables
+let gameRunning = false;
+let gameScore = 0;
+let bestScore = 0;
+let totalTries = 0;
+let bestStreak = 0;
+let currentStreak = 0;
+let gameStartTime = 0;
+const GAME_DURATION_MS = 10000;
+
+// Logging
+function log(message, type = 'info') {
+  const entry = document.createElement('div');
+  entry.className = `log-entry ${type}`;
+  const ts = new Date().toLocaleTimeString();
+  let prefix = '→';
+  if (type === 'in') prefix = '←';
+  if (type === 'error') prefix = '⚠';
+  entry.textContent = `[${ts}] ${prefix} ${message}`;
+  logContainer.appendChild(entry);
+  logContainer.scrollTop = logContainer.scrollHeight;
+}
+
+// Serial helpers
+async function connect() {
+  if (!('serial' in navigator)) {
+    alert('Web Serial API not supported. Use Chrome or Edge.');
+    return;
+  }
+  try {
+    port = await navigator.serial.requestPort();
+    await port.open({ baudRate: 115200 });
+    log('Serial port opened at 115200 baud', 'info');
+
+    const textEncoder = new TextEncoderStream();
+    textEncoder.readable.pipeTo(port.writable);
+    writer = textEncoder.writable.getWriter();
+
+    const textDecoder = new TextDecoderStream();
+    port.readable.pipeTo(textDecoder.writable);
+    reader = textDecoder.readable.getReader();
+
+    updateConnectionUI(true);
+    connectionAlert.style.display = 'none';
+
+    isReading = true;
+    readLoop();
+  } catch (err) {
+    log(`Connection error: ${err.message}`, 'error');
+  }
+}
+
+async function disconnect() {
+  isReading = false;
+  try {
+    if (reader) {
+      await reader.cancel();
+      reader.releaseLock();
     }
+    if (writer) await writer.close();
+    if (port) await port.close();
+  } catch (err) {
+    log(`Disconnect error: ${err.message}`, 'error');
+  }
+  port = null;
+  writer = null;
+  reader = null;
+  updateConnectionUI(false);
+  log('Disconnected from Arduino', 'info');
+}
 
-    function setConnectedUI(connected, portLabel = "Arduino") {
-      if (connected) {
-        connectionLabel.textContent = "Connected";
-        portName.textContent = portLabel;
-        connText.textContent = "Connected";
-        connDot.classList.add("connected");
-        statusText.textContent = "Ready";
-        waterNowBtn.disabled = false;
-        statusBtn.disabled = false;
-      } else {
-        connectionLabel.textContent = "Disconnected";
-        portName.textContent = "No port";
-        connText.textContent = "Disconnected";
-        connDot.classList.remove("connected");
-        statusText.textContent = "Idle";
-        waterNowBtn.disabled = true;
-        statusBtn.disabled = true;
+async function readLoop() {
+  let buffer = '';
+  while (isReading && reader) {
+    try {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buffer += value;
+      const lines = buffer.split('\n');
+      buffer = lines.pop();
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (trimmed) handleIncomingData(trimmed);
       }
+    } catch (err) {
+      log(`Read error: ${err.message}`, 'error');
+      break;
     }
+  }
+}
 
-    async function connectSerial() {
-      if (!("serial" in navigator)) {
-        alert("Web Serial API not supported. Use Chrome or Edge on desktop.");
-        return;
+async function sendCommand(cmd) {
+  if (!writer) {
+    log('Not connected to Arduino', 'error');
+    return;
+  }
+  try {
+    await writer.write(cmd + '\n');
+    log(cmd, 'out');
+  } catch (err) {
+    log(`Send error: ${err.message}`, 'error');
+  }
+}
+
+// Incoming data handler
+function handleIncomingData(data) {
+  log(data, 'in');
+
+  if (data.startsWith('Soil:')) {
+    const m = data.match(/Soil:\s*(\d+)/);
+    if (m) {
+      const value = parseInt(m[1]);
+      soilValue.textContent = value;
+      const pct = (value / 1023) * 100;
+      soilProgress.style.width = pct + '%';
+
+      if (data.includes('STATE:WET')) {
+        soilState.textContent = '💧 Wet - No watering needed';
+        soilState.style.color = 'var(--accent-green)';
+        playWetMusic();
+      } else if (data.includes('STATE:DRY')) {
+        soilState.textContent = '🔥 Dry - Watering recommended';
+        soilState.style.color = 'var(--accent-red)';
+        playDryMusic();
+      } else if (data.includes('STATE:NORMAL')) {
+        soilState.textContent = '✓ Normal - Optimal moisture';
+        soilState.style.color = 'var(--accent-yellow)';
+        stopAllMusic();
       }
 
-      try {
-        port = await navigator.serial.requestPort();
-        await port.open({ baudRate: 115200 });
-
-        const encoder = new TextEncoderStream();
-        const decoder = new TextDecoderStream();
-
-        encoder.readable.pipeTo(port.writable);
-        decoder.readable.pipeTo(port.readable);
-
-        writer = encoder.writable.getWriter();
-        reader = decoder.readable.getReader();
-
-        setConnectedUI(true, "Serial Port");
-        log("Serial connected at 115200 baud");
-        statusChip.querySelector(".status-dot").style.background = "#22c55e";
-
-        readLoopActive = true;
-        readSerialLoop();
-
-        connectBtn.textContent = "🔌 Disconnect";
-      } catch (err) {
-        console.error(err);
-        log("Failed to connect: " + err.message, "error");
-      }
-    }
-
-    async function disconnectSerial() {
-      readLoopActive = false;
-      try {
-        if (reader) {
-          await reader.cancel();
-          reader.releaseLock();
+      // Mini‑game scoring
+      if (gameRunning) {
+        if (value >= 400 && value <= 700) {
+          gameScore++;
+          gameHint.textContent = 'Perfect! Soil in green zone ✅';
+        } else if (value < 400) {
+          gameHint.textContent = 'Too Wet! 📉';
+        } else {
+          gameHint.textContent = 'Too Dry! 🔥';
         }
-        if (writer) {
-          writer.releaseLock();
-        }
-        if (port) {
-          await port.close();
-        }
-      } catch (err) {
-        console.error(err);
-      } finally {
-        port = null;
-        writer = null;
-        reader = null;
-        setConnectedUI(false);
-        connectBtn.textContent = "🔌 Connect Arduino";
-        log("Serial disconnected");
+        updateScoreboard();
       }
     }
+  }
+}
 
-    async function readSerialLoop() {
-      while (readLoopActive && reader) {
-        try {
-          const { value, done } = await reader.read();
-          if (done) break;
-          if (value) {
-            const lines = value.split(/\r?\n/);
-            for (const raw of lines) {
-              if (!raw.trim()) continue;
-              handleIncomingLine(raw.trim());
-            }
-          }
-        } catch (err) {
-          console.error(err);
-          log("Read error: " + err.message, "error");
-          break;
-        }
-      }
+// UI updates
+function updateConnectionUI(connected) {
+  if (connected) {
+    connectionDot.classList.add('connected');
+    connectionStatus.textContent = 'Connected';
+    portName.textContent = 'Arduino (115200)';
+    connectBtn.textContent = '🔌 Disconnect';
+    connectBtn.classList.remove('btn-primary');
+    connectBtn.classList.add('btn-secondary');
+    refreshBtn.disabled = false;
+    waterBtn.disabled = false;
+    calibrateBtn.disabled = false;
+  } else {
+    connectionDot.classList.remove('connected');
+    connectionStatus.textContent = 'Disconnected';
+    portName.textContent = 'Not Connected';
+    connectBtn.textContent = '🔌 Connect Arduino';
+    connectBtn.classList.add('btn-primary');
+    connectBtn.classList.remove('btn-secondary');
+    refreshBtn.disabled = true;
+    waterBtn.disabled = true;
+    calibrateBtn.disabled = true;
+    soilValue.textContent = '---';
+    soilState.textContent = 'Waiting for data...';
+    soilState.style.color = 'var(--text-secondary)';
+    soilProgress.style.width = '0%';
+  }
+}
+
+function updateScoreboard() {
+  scoreboard.textContent =
+    `Score: ${gameScore} | Best: ${bestScore} | Tries: ${totalTries} | Streak: ${bestStreak}`;
+}
+
+// Game control
+function startGame() {
+  if (gameRunning) return;
+  gameRunning = true;
+  gameScore = 0;
+  gameStartTime = Date.now();
+  gameStatus.textContent = 'Game ON';
+  gameStatus.style.color = 'var(--accent-green)';
+  gameHint.textContent = 'Keep the soil in 400‑700! Waiting for readings...';
+  gameProgress.style.width = '0%';
+  updateScoreboard();
+
+  const tick = () => {
+    if (!gameRunning) return;
+    const elapsed = Date.now() - gameStartTime;
+    const pct = Math.min(100, (elapsed / GAME_DURATION_MS) * 100);
+    gameProgress.style.width = pct + '%';
+    if (elapsed >= GAME_DURATION_MS) {
+      endGame();
+    } else {
+      requestAnimationFrame(tick);
     }
+  };
+  requestAnimationFrame(tick);
 
-    async function sendLine(line) {
-      if (!writer) return;
-      log(line, "out");
-      await writer.write(line + "\n");
-    }
+  // Optional hint for Arduino
+  sendCommand('GAME_START');
+}
 
-    function handleIncomingLine(line) {
-      log(line, "in");
+function endGame() {
+  if (!gameRunning) return;
+  gameRunning = false;
+  totalTries++;
+  if (gameScore > bestScore) {
+    bestScore = gameScore;
+    currentStreak++;
+    bestStreak = Math.max(bestStreak, currentStreak);
+    gameHint.textContent = `New high score: ${gameScore}! 🎉`;
+  } else {
+    currentStreak = 0;
+    gameHint.textContent = `Round over. Final score: ${gameScore}.`;
+  }
+  gameStatus.textContent = 'Game Over';
+  gameStatus.style.color = 'var(--accent-yellow)';
+  updateScoreboard();
+  sendCommand('GAME_END');
+}
 
-      if (line.startsWith("Soil:")) {
-        // Example: "Soil: 512 | STATE:WET"
-        const m = line.match(/Soil:\s*(\d+)/i);
-        if (m) {
-          const val = parseInt(m[1], 10);
-          soilValueLabel.textContent = val;
+function resetStats() {
+  if (!confirm('Reset best score and stats?')) return;
+  bestScore = 0;
+  totalTries = 0;
+  bestStreak = 0;
+  currentStreak = 0;
+  gameScore = 0;
+  gameRunning = false;
+  gameProgress.style.width = '0%';
+  gameStatus.textContent = 'Idle';
+  gameStatus.style.color = 'var(--text-primary)';
+  gameHint.textContent = 'Click "Water Now" to start a 10‑second challenge.';
+  updateScoreboard();
+}
 
-          // map approx 0-1023 to %, wet = low
-          const pct = Math.max(0, Math.min(100, (val / 1023) * 100));
-          soilBarFill.style.width = pct + "%";
-        }
+// Event listeners
+connectBtn.addEventListener('click', async () => {
+  if (port) await disconnect();
+  else await connect();
+});
 
-        if (line.includes("STATE:WET")) {
-          soilStateText.textContent = "Wet";
-          soilStatePill.style.borderColor = "rgba(34,197,94,0.8)";
-        } else if (line.includes("STATE:DRY")) {
-          soilStateText.textContent = "Dry";
-          soilStatePill.style.borderColor = "rgba(248,113,113,0.9)";
-        } else if (line.includes("STATE:NORMAL")) {
-          soilStateText.textContent = "Normal";
-          soilStatePill.style.borderColor = "rgba(250,204,21,0.8)";
-        }
-      } else if (line === "TRIGGERED") {
-        pumpStatusLabel.textContent = "Watering…";
-        pumpLastAction.textContent = "Pump cycle started";
-        statusText.textContent = "Watering…";
-      } else if (line === "DONE") {
-        pumpStatusLabel.textContent = "Idle";
-        pumpLastAction.textContent = "Last cycle complete";
-        statusText.textContent = "Idle";
-      } else if (line.startsWith("STATE:WET")) {
-        soilStateText.textContent = "Wet";
-        soilStatePill.style.borderColor = "rgba(34,197,94,0.8)";
-      } else if (line.startsWith("STATE:DRY")) {
-        soilStateText.textContent = "Dry";
-        soilStatePill.style.borderColor = "rgba(248,113,113,0.9)";
-      } else if (line.startsWith("STATE:NORMAL")) {
-        soilStateText.textContent = "Normal";
-        soilStatePill.style.borderColor = "rgba(250,204,21,0.8)";
-      }
-    }
+refreshBtn.addEventListener('click', () => {
+  sendCommand('STATUS');
+});
 
-    // ================== UI Events ==================
+waterBtn.addEventListener('click', () => {
+  startGame();
+});
 
-    connectBtn.addEventListener("click", async () => {
-      if (port) {
-        await disconnectSerial();
-      } else {
-        await connectSerial();
-      }
-    });
+calibrateBtn.addEventListener('click', () => {
+  resetStats();
+});
 
-    waterNowBtn.addEventListener("click", async () => {
-      if (!writer) return;
-      pumpStatusLabel.textContent = "Watering…";
-      pumpLastAction.textContent = "Manual trigger";
-      statusText.textContent = "Watering…";
-      await sendLine("TRIGGER");
-    });
+clearLogBtn.addEventListener('click', () => {
+  logContainer.innerHTML = '';
+  log('Log cleared', 'info');
+});
 
-    statusBtn.addEventListener("click", async () => {
-      if (!writer) return;
-      await sendLine("STATUS");
-    });
+const muteBtn = document.getElementById('muteBtn');
+muteBtn.addEventListener('click', toggleMute);
 
-    clearLogBtn.addEventListener("click", () => {
-      logBox.innerHTML = "";
-    });
+// Init
+log('SoilSymphony initialized. Click "Connect Arduino" to begin.', 'info');
+log('🎮 Plant Mini‑Game: keep soil in 400‑700 during the 10‑second round.', 'info');
 
-    // Init
-    setConnectedUI(false);
-  </script>
+document.addEventListener('click', () => {
+  initAudio();
+}, { once: true });
+</script>
 </body>
 </html>
