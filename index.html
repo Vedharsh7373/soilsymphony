@@ -359,8 +359,8 @@
     <!-- Music Legend -->
     <div style="text-align: center; margin-bottom: 1.5rem; color: var(--text-secondary); font-size: 0.875rem;">
       <div style="display: inline-flex; gap: 2rem; background: var(--bg-elevated); padding: 0.75rem 1.5rem; border-radius: 8px; border: 1px solid var(--border);">
-        <div><span style="color: var(--accent-green);">💧 WET</span> → 432 Hz Meditation Music</div>
-        <div><span style="color: var(--accent-red);">🔥 DRY</span> → Alert Recording</div>
+        <div><span style="color: var(--accent-green);">💧 0-511 (WET)</span> → 432 Hz Meditation Music</div>
+        <div><span style="color: var(--accent-red);">🔥 512-1023 (DRY)</span> → Alert Recording</div>
       </div>
     </div>
 
@@ -410,16 +410,16 @@
           <div class="progress-fill" id="soilProgress"></div>
         </div>
         <div class="progress-labels">
-          <span>Wet (0)</span>
-          <span>Normal (512)</span>
-          <span>Dry (1023)</span>
+          <span>💧 Wet/Moist (0-511)</span>
+          <span style="color: var(--accent-yellow);">⚡ 512</span>
+          <span>🔥 Dry (512-1023)</span>
         </div>
 
         <div class="divider"></div>
 
-        <div class="metric-label">Thresholds</div>
+        <div class="metric-label">Threshold</div>
         <div class="metric-subtitle">
-          Wet: &lt; 400 | Dry: &gt; 700
+          0-511: Wet (432 Hz Music) | 512-1023: Dry (Alert Sound)
         </div>
       </div>
 
@@ -1536,6 +1536,19 @@
           soilState.style.color = 'var(--accent-red)';
           playDryMusic();
           handleSoilStateChange('DRY');
+        } else if (data.includes('STATE:NORMAL')) {
+          const value = parseInt(data.match(/Soil:\s*(\d+)/)[1]);
+          if (value < 512) {
+            soilState.textContent = '💧 Moist - Good condition';
+            soilState.style.color = 'var(--accent-green)';
+            playWetMusic();
+            handleSoilStateChange('WET');
+          } else {
+            soilState.textContent = '🔥 Getting Dry - Monitor closely';
+            soilState.style.color = 'var(--accent-red)';
+            playDryMusic();
+            handleSoilStateChange('DRY');
+          }
         }
       }
 
@@ -1610,7 +1623,7 @@
     updateMusicStatus();
     
     log('🎮 SoilSymphony TURBO MODE initialized!', 'info');
-    log('🎵 Music plays automatically: WET=432Hz | DRY=Alert | NORMAL=Silent', 'info');
+    log('🎵 Music plays: 0-511=432Hz | 512-1023=Alert', 'info');
     log('⏰ Timer auto-starts when soil becomes dry', 'info');
     log('🚀 NEW GAME FEATURES: 10 Levels, Power-ups, Lives, Flying Obstacles!', 'info');
     log('🔊 Click/tap anywhere to enable audio', 'info');
