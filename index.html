@@ -556,55 +556,129 @@
     let dryAlert = null;
     let isMuted = false;
     let currentlyPlaying = null;
+    let audioInitialized = false;
+    let audioUnlocked = false;
 
     const MUSIC_URLS = {
-      wet: 'https://raw.githubusercontent.com/Vedharsh7373/soilsymphony/main/432%20Hz%20-%20Positive%20Energy%20Meditation%20Music%20Deep%20Healing%20Music%20for%20The%20Body%20and%20Soul.mp3',
-      dry: 'https://raw.githubusercontent.com/Vedharsh7373/soilsymphony/main/Record%20(online-voice-recorder.com).mp3'
+      wet: 'https://raw.githubusercontent.com/Vedharsh7373/soilsymphony/refs/heads/main/432%20Hz%20-%20Positive%20Energy%20Meditation%20Music%20Deep%20Healing%20Music%20for%20The%20Body%20and%20Soul.mp3',
+      dry: 'https://raw.githubusercontent.com/Vedharsh7373/soilsymphony/refs/heads/main/Record%20(online-voice-recorder.com).mp3'
     };
 
     function initAudio() {
-      if (!wetMusic) {
-        wetMusic = new Audio(MUSIC_URLS.wet);
+      if (audioInitialized) return;
+      
+      try {
+        wetMusic = new Audio();
+        wetMusic.src = MUSIC_URLS.wet;
         wetMusic.loop = true;
         wetMusic.volume = 0.4;
+        wetMusic.preload = 'auto';
         wetMusic.addEventListener('error', (e) => {
-          log('432 Hz music failed to load', 'error');
+          console.error('Wet music error:', e);
+          log('❌ 432 Hz music failed to load', 'error');
         });
-      }
-      
-      if (!dryAlert) {
-        dryAlert = new Audio(MUSIC_URLS.dry);
+        wetMusic.addEventListener('canplay', () => {
+          log('✓ 432 Hz music ready', 'info');
+        });
+        
+        dryAlert = new Audio();
+        dryAlert.src = MUSIC_URLS.dry;
         dryAlert.loop = true;
         dryAlert.volume = 0.9;
+        dryAlert.preload = 'auto';
         dryAlert.addEventListener('error', (e) => {
-          log('Dry alert sound failed to load', 'error');
+          console.error('Dry alert error:', e);
+          log('❌ Dry alert sound failed to load', 'error');
         });
+        dryAlert.addEventListener('canplay', () => {
+          log('✓ Dry alert sound ready', 'info');
+        });
+        
+        audioInitialized = true;
+        log('🎵 Audio system initialized', 'info');
+      } catch (error) {
+        console.error('Audio init error:', error);
+        log('❌ Audio initialization failed', 'error');
+      }
+    }
+
+    function unlockAudio() {
+      if (audioUnlocked) return;
+      
+      initAudio();
+      
+      if (wetMusic && dryAlert) {
+        const playPromise1 = wetMusic.play();
+        const playPromise2 = dryAlert.play();
+        
+        if (playPromise1 !== undefined) {
+          playPromise1.then(() => {
+            wetMusic.pause();
+            wetMusic.currentTime = 0;
+          }).catch(() => {});
+        }
+        
+        if (playPromise2 !== undefined) {
+          playPromise2.then(() => {
+            dryAlert.pause();
+            dryAlert.currentTime = 0;
+          }).catch(() => {});
+        }
+        
+        audioUnlocked = true;
+        log('🔓 Audio unlocked - ready to play', 'info');
       }
     }
 
     function playWetMusic() {
       if (isMuted || currentlyPlaying === 'wet') return;
+      
+      if (!audioInitialized) {
+        initAudio();
+      }
+      
       stopAllMusic();
+      
       if (wetMusic) {
         wetMusic.currentTime = 0;
-        wetMusic.play().then(() => {
-          currentlyPlaying = 'wet';
-          log('🎵 Playing 432 Hz meditation music', 'info');
-          updateMusicStatus();
-        }).catch(() => {});
+        const playPromise = wetMusic.play();
+        
+        if (playPromise !== undefined) {
+          playPromise.then(() => {
+            currentlyPlaying = 'wet';
+            log('🎵 Playing 432 Hz meditation music', 'info');
+            updateMusicStatus();
+          }).catch((error) => {
+            console.error('Play error:', error);
+            log('⚠️ Click anywhere to enable audio', 'error');
+          });
+        }
       }
     }
 
     function playDryMusic() {
       if (isMuted || currentlyPlaying === 'dry') return;
+      
+      if (!audioInitialized) {
+        initAudio();
+      }
+      
       stopAllMusic();
+      
       if (dryAlert) {
         dryAlert.currentTime = 0;
-        dryAlert.play().then(() => {
-          currentlyPlaying = 'dry';
-          log('🔔 Playing dry alert recording', 'info');
-          updateMusicStatus();
-        }).catch(() => {});
+        const playPromise = dryAlert.play();
+        
+        if (playPromise !== undefined) {
+          playPromise.then(() => {
+            currentlyPlaying = 'dry';
+            log('🔔 Playing dry alert recording', 'info');
+            updateMusicStatus();
+          }).catch((error) => {
+            console.error('Play error:', error);
+            log('⚠️ Click anywhere to enable audio', 'error');
+          });
+        }
       }
     }
 
@@ -638,7 +712,9 @@
       const statusDiv = document.getElementById('musicStatus');
       if (!statusDiv) return;
       
-      if (isMuted) {
+      if (!audioUnlocked) {
+        statusDiv.innerHTML = '<div style="color: var(--accent-yellow); font-weight: 600;">🔒 Click anywhere to enable audio</div>';
+      } else if (isMuted) {
         statusDiv.innerHTML = '<div style="color: var(--text-secondary);">🔇 Audio muted</div>';
       } else if (currentlyPlaying === 'wet') {
         statusDiv.innerHTML = '<div style="color: var(--accent-green); font-weight: 600;">🎵 NOW PLAYING: 432 Hz Meditation Music</div>';
@@ -1537,14 +1613,29 @@
 
     // Initialize
     loadTimerDuration();
+    updateMusicStatus();
     
-    log('🎮 SoilSymphony EXTREME MODE initialized!', 'info');
+    log('🎮 SoilSymphony TURBO MODE initialized!', 'info');
     log('🎵 Music plays automatically: WET=432Hz | DRY=Alert | NORMAL=Silent', 'info');
     log('⏰ Timer auto-starts when soil becomes dry', 'info');
     log('🚀 NEW GAME FEATURES: 10 Levels, Power-ups, Lives, Flying Obstacles!', 'info');
+    log('🔊 Click/tap anywhere to enable audio', 'info');
     
-    document.addEventListener('click', () => {
-      initAudio();
+    // Unlock audio on ANY user interaction
+    function setupAudioUnlock() {
+      unlockAudio();
+      updateMusicStatus();
+    }
+    
+    document.addEventListener('click', setupAudioUnlock, { once: true });
+    document.addEventListener('touchstart', setupAudioUnlock, { once: true });
+    document.addEventListener('keydown', setupAudioUnlock, { once: true });
+    
+    // Also trigger on connect button
+    const originalConnectHandler = connectBtn.onclick;
+    connectBtn.addEventListener('click', () => {
+      unlockAudio();
+      updateMusicStatus();
     }, { once: true });
   </script>
 </body>
