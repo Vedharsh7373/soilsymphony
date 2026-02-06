@@ -361,7 +361,6 @@
       <div style="display: inline-flex; gap: 2rem; background: var(--bg-elevated); padding: 0.75rem 1.5rem; border-radius: 8px; border: 1px solid var(--border);">
         <div><span style="color: var(--accent-green);">💧 WET</span> → 432 Hz Meditation Music</div>
         <div><span style="color: var(--accent-red);">🔥 DRY</span> → Alert Recording</div>
-        <div><span style="color: var(--accent-yellow);">✓ NORMAL</span> → No Music</div>
       </div>
     </div>
 
@@ -420,7 +419,7 @@
 
         <div class="metric-label">Thresholds</div>
         <div class="metric-subtitle">
-          Wet: &lt; 400 | Normal: 400-700 | Dry: &gt; 700
+          Wet: &lt; 400 | Dry: &gt; 700
         </div>
       </div>
 
@@ -1537,11 +1536,6 @@
           soilState.style.color = 'var(--accent-red)';
           playDryMusic();
           handleSoilStateChange('DRY');
-        } else if (data.includes('STATE:NORMAL')) {
-          soilState.textContent = '✓ Normal - Optimal moisture';
-          soilState.style.color = 'var(--accent-yellow)';
-          stopAllMusic();
-          handleSoilStateChange('NORMAL');
         }
       }
 
